@@ -54,26 +54,38 @@ export function activate(context: vscode.ExtensionContext) {
 		),
 	)
 
-	context.subscriptions.push(
-		vscode.commands.registerCommand("clinetastic.plusButtonClicked", async () => {
-			outputChannel.appendLine("Plus button Clicked")
-			await sidebarProvider.clearTask()
-			await sidebarProvider.postStateToWebview()
-			await sidebarProvider.postMessageToWebview({ type: "action", action: "chatButtonClicked" })
-		}),
-	)
+	// Register core navigation commands
+	const commands = [
+		{
+			id: "clinetastic.plusButtonClicked",
+			handler: async () => {
+				outputChannel.appendLine("Plus button Clicked")
+				await sidebarProvider.clearTask()
+				await sidebarProvider.postStateToWebview()
+				await sidebarProvider.postMessageToWebview({ type: "action", action: "chatButtonClicked" })
+			},
+		},
+		{
+			id: "clinetastic.mcpButtonClicked",
+			handler: () => sidebarProvider.postMessageToWebview({ type: "action", action: "mcpButtonClicked" }),
+		},
+		{
+			id: "clinetastic.promptsButtonClicked",
+			handler: () => sidebarProvider.postMessageToWebview({ type: "action", action: "promptsButtonClicked" }),
+		},
+		{
+			id: "clinetastic.settingsButtonClicked",
+			handler: () => sidebarProvider.postMessageToWebview({ type: "action", action: "settingsButtonClicked" }),
+		},
+		{
+			id: "clinetastic.historyButtonClicked",
+			handler: () => sidebarProvider.postMessageToWebview({ type: "action", action: "historyButtonClicked" }),
+		},
+	]
 
-	context.subscriptions.push(
-		vscode.commands.registerCommand("clinetastic.mcpButtonClicked", () => {
-			sidebarProvider.postMessageToWebview({ type: "action", action: "mcpButtonClicked" })
-		}),
-	)
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand("clinetastic.promptsButtonClicked", () => {
-			sidebarProvider.postMessageToWebview({ type: "action", action: "promptsButtonClicked" })
-		}),
-	)
+	commands.forEach((cmd) => {
+		context.subscriptions.push(vscode.commands.registerCommand(cmd.id, cmd.handler))
+	})
 
 	const openClineInNewTab = async () => {
 		outputChannel.appendLine("Opening Cline in new tab")
@@ -115,19 +127,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(vscode.commands.registerCommand("clinetastic.popoutButtonClicked", openClineInNewTab))
 	context.subscriptions.push(vscode.commands.registerCommand("clinetastic.openInNewTab", openClineInNewTab))
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand("clinetastic.settingsButtonClicked", () => {
-			//vscode.window.showInformationMessage(message)
-			sidebarProvider.postMessageToWebview({ type: "action", action: "settingsButtonClicked" })
-		}),
-	)
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand("clinetastic.historyButtonClicked", () => {
-			sidebarProvider.postMessageToWebview({ type: "action", action: "historyButtonClicked" })
-		}),
-	)
 
 	/*
 	We use the text document content provider API to show the left side for diff view by creating a virtual document for the original content. This makes it readonly so users know to edit the right side if they want to keep their changes.
