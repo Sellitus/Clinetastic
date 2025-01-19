@@ -100,6 +100,8 @@ type GlobalStateKey =
 	| "enhancementApiConfigId"
 	| "experimentalDiffStrategy"
 	| "autoApprovalEnabled"
+	| "planningModel"
+	| "executionModel"
 
 export const GlobalFileNames = {
 	apiConversationHistory: "api_conversation_history.json",
@@ -900,6 +902,14 @@ export class ClineProvider implements vscode.WebviewViewProvider {
 						break
 					case "autoApprovalEnabled":
 						await this.updateGlobalState("autoApprovalEnabled", message.bool ?? false)
+						await this.postStateToWebview()
+						break
+					case "planningModel":
+						await this.updateGlobalState("planningModel", message.text)
+						await this.postStateToWebview()
+						break
+					case "executionModel":
+						await this.updateGlobalState("executionModel", message.text)
 						await this.postStateToWebview()
 						break
 					case "enhancePrompt":
@@ -1844,6 +1854,8 @@ export class ClineProvider implements vscode.WebviewViewProvider {
 			enhancementApiConfigId,
 			experimentalDiffStrategy,
 			autoApprovalEnabled,
+			planningModel,
+			executionModel,
 		] = await Promise.all([
 			this.getGlobalState("apiProvider") as Promise<ApiProvider | undefined>,
 			this.getGlobalState("apiModelId") as Promise<string | undefined>,
@@ -1906,6 +1918,8 @@ export class ClineProvider implements vscode.WebviewViewProvider {
 			this.getGlobalState("enhancementApiConfigId") as Promise<string | undefined>,
 			this.getGlobalState("experimentalDiffStrategy") as Promise<boolean | undefined>,
 			this.getGlobalState("autoApprovalEnabled") as Promise<boolean | undefined>,
+			this.getGlobalState("planningModel") as Promise<string | undefined>,
+			this.getGlobalState("executionModel") as Promise<string | undefined>,
 		])
 
 		let apiProvider: ApiProvider
@@ -2014,6 +2028,8 @@ export class ClineProvider implements vscode.WebviewViewProvider {
 			enhancementApiConfigId,
 			experimentalDiffStrategy: experimentalDiffStrategy ?? false,
 			autoApprovalEnabled: autoApprovalEnabled ?? false,
+			planningModel: planningModel ?? "claude-3-5-haiku-20241022",
+			executionModel: executionModel ?? "claude-3-5-sonnet-20241022",
 		}
 	}
 

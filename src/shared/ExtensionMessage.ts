@@ -96,6 +96,8 @@ export interface ExtensionState {
 	enhancementApiConfigId?: string
 	experimentalDiffStrategy?: boolean
 	autoApprovalEnabled?: boolean
+	planningModel?: string
+	executionModel?: string
 }
 
 export interface ClineMessage {

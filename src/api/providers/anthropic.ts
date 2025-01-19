@@ -60,10 +60,15 @@ export class AnthropicHandler implements ApiHandler, SingleCompletionHandler {
 														cache_control: { type: "ephemeral" },
 													},
 												]
-											: message.content.map((content) => ({
-													...content,
-													cache_control: { type: "ephemeral" },
-												})),
+											: message.content.map((content, contentIndex) =>
+													// Only apply cache_control to the first text block
+													content.type === "text" && contentIndex === 0
+														? {
+																...content,
+																cache_control: { type: "ephemeral" },
+															}
+														: content,
+												),
 								}
 							}
 							// For all other messages, preserve their original state to maximize cache reuse

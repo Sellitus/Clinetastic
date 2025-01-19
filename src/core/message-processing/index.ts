@@ -1,6 +1,7 @@
 import { MessageProcessor } from "./MessageProcessor"
 import { createValidationStage } from "./stages/ValidationStage"
 import { createToolParserStage } from "./stages/ToolParserStage"
+import { createModelSelectionStage } from "./stages/ModelSelectionStage"
 import type {
 	MessageContext,
 	ProcessingResult,
@@ -22,6 +23,7 @@ export function createMessageProcessor(options: {
 	const processor = new MessageProcessor()
 
 	// Add default stages in correct order
+	processor.addPipelineStage(createModelSelectionStage()) // Add model selection first
 	processor.addPipelineStage(createValidationStage())
 	processor.addPipelineStage(createToolParserStage())
 
@@ -67,4 +69,4 @@ export type { MessageContext, ProcessingResult, Tool, ToolHooks, ToolResult, Pip
 export { MessageProcessor }
 
 // Export stages
-export { createValidationStage, createToolParserStage }
+export { createValidationStage, createToolParserStage, createModelSelectionStage }

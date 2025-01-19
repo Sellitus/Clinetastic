@@ -1,4 +1,5 @@
 import { Mode } from "../../shared/modes"
+import { ApiConfiguration, ModelInfo } from "../../shared/api"
 
 /**
  * Core types for the message processing system
@@ -11,6 +12,12 @@ export interface EnvironmentDetails {
 	activeTerminals: string[]
 	currentTime: Date
 	mode: Mode
+}
+
+export interface MessageAttachment {
+	type: "image" | "file"
+	content: string
+	mimeType?: string
 }
 
 export interface MessageContext {
@@ -26,6 +33,12 @@ export interface MessageContext {
 	requiresToolExecution?: boolean
 	/** Tool execution details if needed */
 	toolExecution?: ToolExecutionContext
+	/** API configuration */
+	apiConfig?: ApiConfiguration
+	/** Model information */
+	modelInfo?: ModelInfo
+	/** Message attachments */
+	attachments?: MessageAttachment[]
 }
 
 export interface ToolExecutionContext {
