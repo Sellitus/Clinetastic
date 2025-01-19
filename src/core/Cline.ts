@@ -53,7 +53,9 @@ import { AssistantMessageContent, parseAssistantMessage, ToolParamName, ToolUseN
 import { formatResponse } from "./prompts/responses"
 import { addCustomInstructions, SYSTEM_PROMPT } from "./prompts/system"
 import { modes, defaultModeSlug } from "../shared/modes"
-import { truncateHalfConversation } from "./sliding-window"
+import { truncateConversation } from "./sliding-window"
+import { registerMessageProcessingStages } from "./message-processing/stages"
+import { MessageProcessor } from "./message-processing/MessageProcessor"
 import { ClineProvider, GlobalFileNames } from "./webview/ClineProvider"
 import { detectCodeOmission } from "../integrations/editor/detect-omission"
 import { BrowserSession } from "../services/browser/BrowserSession"
@@ -848,7 +850,11 @@ export class Cline {
 				const contextWindow = this.api.getModel().info.contextWindow || 128_000
 				const maxAllowedSize = Math.max(contextWindow - 40_000, contextWindow * 0.8)
 				if (totalTokens >= maxAllowedSize) {
-					const truncatedMessages = truncateHalfConversation(this.apiConversationHistory)
+					const truncatedMessages = truncateConversation(this.apiConversationHistory, {
+						maxSize: Math.floor(this.apiConversationHistory.length / 2),
+						minRelevanceScore: 0.3,
+						preserveGroups: ["code", "test"],
+					})
 					await this.overwriteApiConversationHistory(truncatedMessages)
 				}
 			}

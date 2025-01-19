@@ -2,6 +2,7 @@ import { MessageProcessor } from "./MessageProcessor"
 import { createValidationStage } from "./stages/ValidationStage"
 import { createToolParserStage } from "./stages/ToolParserStage"
 import { createModelSelectionStage } from "./stages/ModelSelectionStage"
+import { registerMessageProcessingStages } from "./stages"
 import type {
 	MessageContext,
 	ProcessingResult,
@@ -21,12 +22,15 @@ export function createMessageProcessor(options: {
 	additionalStages?: PipelineStage[]
 }): MessageProcessor {
 	const processor = new MessageProcessor()
+	// Register semantic chunking and other core stages
+	registerMessageProcessingStages(processor)
 
-	// Add default stages in correct order
+	// Add default processing stages in correct order
 	processor.addPipelineStage(createModelSelectionStage()) // Add model selection first
 	processor.addPipelineStage(createValidationStage())
 	processor.addPipelineStage(createToolParserStage())
 
+	// Add any additional custom stages
 	// Add any additional stages
 	if (options.additionalStages) {
 		options.additionalStages.forEach((stage) => processor.addPipelineStage(stage))

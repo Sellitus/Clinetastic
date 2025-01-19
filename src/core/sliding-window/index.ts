@@ -1,26 +1,78 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 
-/*
-We can't implement a dynamically updating sliding window as it would break prompt cache
-every time. To maintain the benefits of caching, we need to keep conversation history
-static. This operation should be performed as infrequently as possible. If a user reaches
-a 200k context, we can assume that the first half is likely irrelevant to their current task.
-Therefore, this function should only be called when absolutely necessary to fit within
-context limits, not as a continuous process.
-*/
-export function truncateHalfConversation(
-	messages: Anthropic.Messages.MessageParam[],
-): Anthropic.Messages.MessageParam[] {
-	// API expects messages to be in user-assistant order, and tool use messages must be followed by tool results. We need to maintain this structure while truncating.
+import { ChunkMetadata } from "../message-processing/stages/semantic-chunking"
 
-	// Always keep the first Task message (this includes the project's file structure in environment_details)
+interface WindowOptions {
+	maxSize?: number
+	minRelevanceScore?: number
+	preserveGroups?: string[]
+}
+
+const DEFAULT_OPTIONS: {
+	maxSize: number
+	minRelevanceScore: number
+	preserveGroups: string[]
+} = {
+	maxSize: 50,
+	minRelevanceScore: 0.3,
+	preserveGroups: ["code", "test"],
+}
+
+/**
+ * Implements semantic-aware sliding window that preserves relevant context
+ * while staying within size limits. Uses metadata from semantic chunking
+ * to make intelligent decisions about what context to keep.
+ */
+export function truncateConversation(
+	messages: Array<Anthropic.Messages.MessageParam & { metadata?: ChunkMetadata }>,
+	options?: Partial<typeof DEFAULT_OPTIONS>,
+): Anthropic.Messages.MessageParam[] {
+	const { maxSize, minRelevanceScore, preserveGroups } = { ...DEFAULT_OPTIONS, ...options }
+
+	// Always keep first message with environment details
 	const truncatedMessages = [messages[0]]
 
-	// Remove half of user-assistant pairs
-	const messagesToRemove = Math.floor(messages.length / 4) * 2 // has to be even number
+	// Keep track of preserved message pairs
+	const preservedPairs = new Set<number>()
 
-	const remainingMessages = messages.slice(messagesToRemove + 1) // has to start with assistant message since tool result cannot follow assistant message with no tool use
-	truncatedMessages.push(...remainingMessages)
+	// First pass: mark message pairs to preserve based on semantic criteria
+	for (let i = 1; i < messages.length - 1; i += 2) {
+		const userMsg = messages[i]
+		const assistantMsg = messages[i + 1]
+
+		// Skip if we don't have a complete pair
+		if (!assistantMsg) continue
+
+		const shouldPreserve =
+			// Keep messages with high relevance
+			(userMsg.metadata?.relevanceScore || 0) >= minRelevanceScore ||
+			(assistantMsg.metadata?.relevanceScore || 0) >= minRelevanceScore ||
+			// Keep messages from preserved semantic groups
+			preserveGroups?.includes(userMsg.metadata?.semanticGroup || "") ||
+			preserveGroups?.includes(assistantMsg.metadata?.semanticGroup || "")
+
+		if (shouldPreserve) {
+			preservedPairs.add(i)
+		}
+	}
+
+	// Second pass: build final message list while respecting max size
+	let currentSize = 1 // Start at 1 for initial message
+
+	for (let i = 1; i < messages.length - 1; i += 2) {
+		// Always keep last 3 message pairs for immediate context
+		const isRecentContext = i >= messages.length - 6
+
+		if (currentSize + 2 <= maxSize && (preservedPairs.has(i) || isRecentContext)) {
+			truncatedMessages.push(messages[i], messages[i + 1])
+			currentSize += 2
+		}
+	}
+
+	// Ensure we end with complete message pairs
+	if (truncatedMessages.length % 2 === 0) {
+		truncatedMessages.pop()
+	}
 
 	return truncatedMessages
 }
