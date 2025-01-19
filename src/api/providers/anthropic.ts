@@ -45,9 +45,10 @@ export class AnthropicHandler implements ApiHandler, SingleCompletionHandler {
 						model: modelId,
 						max_tokens: this.getModel().info.maxTokens || 8192,
 						temperature: 0,
-						system: [{ text: systemPrompt, type: "text", cache_control: { type: "ephemeral" } }], // setting cache breakpoint for system prompt so new tasks can reuse it
+						system: [{ text: systemPrompt, type: "text" }], // Allow system prompt to be cached since it often remains constant
 						messages: messages.map((message, index) => {
-							if (index === lastUserMsgIndex || index === secondLastMsgUserIndex) {
+							// Only mark the latest user message as ephemeral to enable cache hits for previous exchanges
+							if (index === lastUserMsgIndex) {
 								return {
 									...message,
 									content:
@@ -59,13 +60,13 @@ export class AnthropicHandler implements ApiHandler, SingleCompletionHandler {
 														cache_control: { type: "ephemeral" },
 													},
 												]
-											: message.content.map((content, contentIndex) =>
-													contentIndex === message.content.length - 1
-														? { ...content, cache_control: { type: "ephemeral" } }
-														: content,
-												),
+											: message.content.map((content) => ({
+													...content,
+													cache_control: { type: "ephemeral" },
+												})),
 								}
 							}
+							// For all other messages, preserve their original state to maximize cache reuse
 							return message
 						}),
 						// tools, // cache breakpoints go from tools > system > messages, and since tools dont change, we can just set the breakpoint at the end of system (this avoids having to set a breakpoint at the end of tools which by itself does not meet min requirements for haiku caching)
@@ -112,9 +113,14 @@ export class AnthropicHandler implements ApiHandler, SingleCompletionHandler {
 				case "message_start":
 					// tells us cache reads/writes/input/output
 					const usage = chunk.message.usage
+					// Calculate effective token usage considering cache hits
+					const effectiveInputTokens = Math.max(
+						0,
+						(usage.input_tokens || 0) - (usage.cache_read_input_tokens || 0),
+					)
 					yield {
 						type: "usage",
-						inputTokens: usage.input_tokens || 0,
+						inputTokens: effectiveInputTokens, // Report effective tokens (total - cached)
 						outputTokens: usage.output_tokens || 0,
 						cacheWriteTokens: usage.cache_creation_input_tokens || undefined,
 						cacheReadTokens: usage.cache_read_input_tokens || undefined,
