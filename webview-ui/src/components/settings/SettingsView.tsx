@@ -888,8 +888,8 @@ const SettingsView = ({ onDone }: SettingsViewProps) => {
 					}}>
 					<p style={{ wordWrap: "break-word", margin: 0, padding: 0 }}>
 						If you have any questions or feedback, feel free to open an issue at{" "}
-						<VSCodeLink href="https://github.com/RooVetGit/Clinetastic" style={{ display: "inline" }}>
-							github.com/RooVetGit/Clinetastic
+						<VSCodeLink href="https://github.com/sellitus/Clinetastic" style={{ display: "inline" }}>
+							github.com/sellitus/Clinetastic
 						</VSCodeLink>{" "}
 						or join{" "}
 						<VSCodeLink href="https://www.reddit.com/r/clinetastic/" style={{ display: "inline" }}>

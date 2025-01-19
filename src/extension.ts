@@ -21,10 +21,10 @@ let outputChannel: vscode.OutputChannel
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-	outputChannel = vscode.window.createOutputChannel("Cline")
+	outputChannel = vscode.window.createOutputChannel("Clinetastic")
 	context.subscriptions.push(outputChannel)
 
-	outputChannel.appendLine("Cline extension activated")
+	outputChannel.appendLine("Clinetastic extension activated")
 
 	// Get default commands from configuration
 	const defaultCommands = vscode.workspace.getConfiguration("clinetastic").get<string[]>("allowedCommands") || []
@@ -99,7 +99,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 		const targetCol = hasVisibleEditors ? Math.max(lastCol + 1, 1) : vscode.ViewColumn.Two
 
-		const panel = vscode.window.createWebviewPanel(ClineProvider.tabPanelId, "Cline", targetCol, {
+		const panel = vscode.window.createWebviewPanel(ClineProvider.tabPanelId, "Clinetastic", targetCol, {
 			enableScripts: true,
 			retainContextWhenHidden: true,
 			localResourceRoots: [context.extensionUri],
@@ -179,5 +179,5 @@ export function activate(context: vscode.ExtensionContext) {
 
 // This method is called when your extension is deactivated
 export function deactivate() {
-	outputChannel.appendLine("Cline extension deactivated")
+	outputChannel.appendLine("Clinetastic extension deactivated")
 }

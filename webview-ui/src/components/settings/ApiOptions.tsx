@@ -851,13 +851,13 @@ const ApiOptions = ({ apiErrorMessage, modelIdErrorMessage }: ApiOptionsProps) =
 }
 
 export function getGlamaAuthUrl(uriScheme?: string) {
-	const callbackUrl = `${uriScheme || "vscode"}://rooveterinaryinc.clinetastic/glama`
+	const callbackUrl = `${uriScheme || "vscode"}://sellitus.clinetastic/glama`
 
 	return `https://glama.ai/oauth/authorize?callback_url=${encodeURIComponent(callbackUrl)}`
 }
 
 export function getOpenRouterAuthUrl(uriScheme?: string) {
-	return `https://openrouter.ai/auth?callback_url=${uriScheme || "vscode"}://rooveterinaryinc.clinetastic/openrouter`
+	return `https://openrouter.ai/auth?callback_url=${uriScheme || "vscode"}://sellitus.clinetastic/openrouter`
 }
 
 export const formatPrice = (price: number) => {
