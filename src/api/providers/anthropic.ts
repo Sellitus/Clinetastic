@@ -118,14 +118,9 @@ export class AnthropicHandler implements ApiHandler, SingleCompletionHandler {
 				case "message_start":
 					// tells us cache reads/writes/input/output
 					const usage = chunk.message.usage
-					// Calculate effective token usage considering cache hits
-					const effectiveInputTokens = Math.max(
-						0,
-						(usage.input_tokens || 0) - (usage.cache_read_input_tokens || 0),
-					)
 					yield {
 						type: "usage",
-						inputTokens: effectiveInputTokens, // Report effective tokens (total - cached)
+						inputTokens: usage.input_tokens || 0, // Report raw input tokens
 						outputTokens: usage.output_tokens || 0,
 						cacheWriteTokens: usage.cache_creation_input_tokens || undefined,
 						cacheReadTokens: usage.cache_read_input_tokens || undefined,

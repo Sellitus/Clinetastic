@@ -79,18 +79,9 @@ Description: Request to make precise, surgical changes to existing code. This is
 
 Best practices for using this tool:
 1. Always use read_file first to get exact content and line numbers
-2. Include sufficient context in the SEARCH section (3-5 lines minimum)
+2. Include sufficient context in the SEARCH section (not just the line you want to change)
 3. Pay attention to whitespace, indentation, and closing delimiters
 4. Make one focused change per operation for better reliability
-5. For large changes, break them down into multiple smaller diffs
-6. When changing function/class definitions, include the entire block
-7. Include closing brackets/braces in both search and replace sections
-
-Common pitfalls to avoid:
-1. Using too little context (increases risk of wrong matches)
-2. Forgetting to update related code sections
-3. Not accounting for indentation changes
-4. Missing closing delimiters in search/replace blocks
 
 The tool will validate the exact match including whitespace before making any changes, making it safer than write_to_file for modifications.
 

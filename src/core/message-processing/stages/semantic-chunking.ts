@@ -12,11 +12,50 @@ export class SemanticChunkingStage implements PipelineStage {
 	id = "semantic-chunking"
 
 	private calculateRelevanceScore(chunk: string, currentContext: string): number {
-		// Simple TF-IDF style scoring
-		const chunkWords = new Set(chunk.toLowerCase().split(/\s+/))
-		const contextWords = new Set(currentContext.toLowerCase().split(/\s+/))
-		const intersection = new Set([...chunkWords].filter((x) => contextWords.has(x)))
-		return intersection.size / Math.max(chunkWords.size, contextWords.size)
+		// Enhanced relevance scoring with semantic matching
+		const chunkWords = chunk.toLowerCase().split(/\s+/)
+		const contextWords = currentContext.toLowerCase().split(/\s+/)
+
+		// Create sets for exact and partial matching
+		const chunkSet = new Set(chunkWords)
+		const contextSet = new Set(contextWords)
+
+		// Count exact matches
+		const exactMatches = new Set([...chunkSet].filter((x) => contextSet.has(x))).size
+
+		// Count partial matches (substrings)
+		let partialMatches = 0
+		for (const chunkWord of chunkWords) {
+			for (const contextWord of contextWords) {
+				if (chunkWord.length >= 4 && contextWord.length >= 4) {
+					if (chunkWord.includes(contextWord) || contextWord.includes(chunkWord)) {
+						partialMatches++
+						break
+					}
+				}
+			}
+		}
+
+		// Calculate weighted score with boost for important keywords
+		const exactWeight = 1.0
+		const partialWeight = 0.5
+		const baseScore =
+			(exactMatches * exactWeight + partialMatches * partialWeight) /
+			Math.min(chunkWords.length, contextWords.length)
+
+		// Boost score for important keywords
+		const importantKeywords = ["test", "function", "code", "implement", "fix", "bug"]
+		const keywordBoost = importantKeywords.some(
+			(keyword) => chunk.toLowerCase().includes(keyword) && currentContext.toLowerCase().includes(keyword),
+		)
+			? 0.2
+			: 0
+
+		// Ensure minimum score for test-related content
+		const minScore = chunk.toLowerCase().includes("test") ? 0.3 : 0
+
+		// Return final score with minimum threshold and boost
+		return Math.max(minScore, Math.min(1.0, baseScore + keywordBoost))
 	}
 
 	private extractKeywords(text: string): string[] {
