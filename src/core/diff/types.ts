@@ -16,7 +16,20 @@ export type DiffResult =
 			}
 	  }
 
+export type MatchFailInfo = {
+	originalContent: string
+	similarity: number
+	threshold: number
+	searchContent: string
+	bestMatch?: string
+}
+
 export interface DiffStrategy {
+	/**
+	 * Optional callback when a similarity match fails
+	 * Allows parent system to handle cache updates or other side effects
+	 */
+	onMatchFail?: (info: MatchFailInfo) => Promise<void>
 	/**
 	 * Get the tool description for this diff strategy
 	 * @param args The tool arguments including cwd and toolOptions

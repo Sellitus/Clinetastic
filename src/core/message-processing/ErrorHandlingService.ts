@@ -6,6 +6,9 @@ import {
 	ErrorSeverity,
 	ErrorAnalysis,
 	ERROR_PATTERNS,
+	EnhancedErrorEntry,
+	isEnhancedErrorEntry,
+	TimingAnalysis,
 } from "./error-handling"
 
 export class ErrorHandlingService implements ErrorHandler, PerformanceTracker {
@@ -14,8 +17,55 @@ export class ErrorHandlingService implements ErrorHandler, PerformanceTracker {
 	private readonly BACKOFF_MULTIPLIER = 1.5
 	private readonly MIN_RETRY_DELAY = 1000 // 1 second
 	private readonly MAX_RETRY_DELAY = 10000 // 10 seconds
+	private readonly TIME_WINDOW = 300000 // 5 minutes
+	private readonly BURST_THRESHOLD = 3 // Number of errors in time window to consider a burst
 
 	private toolPerformance = new Map<string, ToolMetrics>()
+
+	private analyzeErrorTiming(errors: (Error | EnhancedErrorEntry)[]): {
+		hasBurst: boolean
+		avgTimeBetweenErrors: number
+		isRegularPattern: boolean
+	} {
+		const timestamps = errors
+			.filter(isEnhancedErrorEntry)
+			.map((e) => e.timestamp)
+			.sort((a, b) => a - b)
+
+		if (timestamps.length < 2) {
+			return {
+				hasBurst: false,
+				avgTimeBetweenErrors: 0,
+				isRegularPattern: false,
+			}
+		}
+
+		// Calculate time gaps between errors
+		const timeGaps: number[] = []
+		for (let i = 1; i < timestamps.length; i++) {
+			timeGaps.push(timestamps[i] - timestamps[i - 1])
+		}
+
+		// Check for error bursts in time window
+		const now = Date.now()
+		const recentErrors = timestamps.filter((t) => now - t < this.TIME_WINDOW)
+		const hasBurst = recentErrors.length >= this.BURST_THRESHOLD
+
+		// Calculate average time between errors
+		const avgTimeBetweenErrors = timeGaps.reduce((a, b) => a + b, 0) / timeGaps.length
+
+		// Check if errors follow a regular pattern
+		const stdDev = Math.sqrt(
+			timeGaps.reduce((acc, gap) => acc + Math.pow(gap - avgTimeBetweenErrors, 2), 0) / timeGaps.length,
+		)
+		const isRegularPattern = stdDev / avgTimeBetweenErrors < 0.5 // Coefficient of variation < 50%
+
+		return {
+			hasBurst,
+			avgTimeBetweenErrors,
+			isRegularPattern,
+		}
+	}
 
 	getToolPerformanceStats(toolName: string): ToolMetrics {
 		if (!this.toolPerformance.has(toolName)) {
@@ -66,28 +116,64 @@ export class ErrorHandlingService implements ErrorHandler, PerformanceTracker {
 		return Math.min(baseDelay * errorMultiplier * timeMultiplier, this.MAX_RETRY_DELAY)
 	}
 
-	analyzeErrorPatterns(errors: Error[]): ErrorAnalysis {
-		const lastError = errors[errors.length - 1]?.message.toLowerCase() || ""
+	getErrorFromEntry(entry: Error | EnhancedErrorEntry): Error {
+		if ("error" in entry && "timestamp" in entry && "context" in entry) {
+			return entry.error
+		}
+		return entry
+	}
+
+	analyzeErrorPatterns(errors: (Error | EnhancedErrorEntry)[]): ErrorAnalysis {
+		const lastError = this.getErrorFromEntry(errors[errors.length - 1])?.message.toLowerCase() || ""
 		const pattern = this.categorizeError(lastError)
 
-		// Calculate frequency of similar errors
-		const similarErrors = errors.filter((e) => this.categorizeError(e.message.toLowerCase()) === pattern)
+		// Enhanced error pattern analysis
+		const similarErrors = errors.filter((e) => {
+			const error = this.getErrorFromEntry(e)
+			const samePattern = this.categorizeError(error.message.toLowerCase()) === pattern
+
+			// If it's an enhanced error entry, use additional context
+			if (isEnhancedErrorEntry(e)) {
+				// Check for similar resource usage patterns
+				const highMemory = e.context.memory > 1_000_000_000 // 1GB
+				const highCPU = e.context.cpu > 80 // 80% CPU usage
+
+				// Consider errors similar if they have similar resource patterns
+				if (highMemory || highCPU) {
+					return true
+				}
+			}
+
+			return samePattern
+		})
+
 		const frequency = similarErrors.length / errors.length
 		const isRecurring = similarErrors.length >= this.ERROR_THRESHOLD
 
-		// Determine severity
-		const severity = this.calculateErrorSeverity(pattern, frequency, isRecurring)
+		// Analyze timing patterns
+		const timing = this.analyzeErrorTiming(errors)
 
-		// Generate recommendation
-		const recommendation = this.getErrorRecommendation(pattern, severity, isRecurring)
+		// Determine severity with timing information
+		const severity = this.calculateErrorSeverity(pattern, frequency, isRecurring, timing)
 
-		return {
+		// Generate recommendation with timing information
+		const recommendation = this.getErrorRecommendation(pattern, severity, isRecurring, timing)
+
+		// Ensure we always return timing information
+		const result: ErrorAnalysis = {
 			pattern,
 			frequency,
 			isRecurring,
 			severity,
 			recommendation,
+			timing: {
+				hasBurst: timing.hasBurst,
+				avgTimeBetweenErrors: timing.avgTimeBetweenErrors,
+				isRegularPattern: timing.isRegularPattern,
+			},
 		}
+
+		return result
 	}
 
 	categorizeError(errorMessage: string): ErrorPattern {
@@ -109,17 +195,42 @@ export class ErrorHandlingService implements ErrorHandler, PerformanceTracker {
 		return ERROR_PATTERNS.UNKNOWN
 	}
 
-	calculateErrorSeverity(pattern: ErrorPattern, frequency: number, isRecurring: boolean): ErrorSeverity {
+	calculateErrorSeverity(
+		pattern: ErrorPattern,
+		frequency: number,
+		isRecurring: boolean,
+		timing?: TimingAnalysis,
+	): ErrorSeverity {
+		// Base severity calculation
+		let severity: ErrorSeverity = "low"
+
+		// Pattern-based severity
 		if (pattern === ERROR_PATTERNS.SYSTEM || frequency > 0.7) {
-			return "high"
+			severity = "high"
+		} else if (isRecurring || frequency > 0.4 || pattern === ERROR_PATTERNS.PERMISSION) {
+			severity = "medium"
 		}
-		if (isRecurring || frequency > 0.4 || pattern === ERROR_PATTERNS.PERMISSION) {
-			return "medium"
+
+		// Adjust based on timing patterns if available
+		if (timing) {
+			if (timing.hasBurst) {
+				// Error burst indicates a serious issue
+				severity = "high"
+			} else if (timing.isRegularPattern) {
+				// Regular patterns suggest systematic issues
+				severity = severity === "low" ? "medium" : "high"
+			}
 		}
-		return "low"
+
+		return severity
 	}
 
-	getErrorRecommendation(pattern: ErrorPattern, severity: ErrorSeverity, isRecurring: boolean): string {
+	getErrorRecommendation(
+		pattern: ErrorPattern,
+		severity: ErrorSeverity,
+		isRecurring: boolean,
+		timing?: TimingAnalysis,
+	): string {
 		const recommendations = new Map<ErrorPattern, string>([
 			["timeout", "Consider breaking operation into smaller steps or increasing timeout threshold"],
 			["validation", "Review parameter requirements and input formats"],
@@ -129,16 +240,29 @@ export class ErrorHandlingService implements ErrorHandler, PerformanceTracker {
 			["unknown", "Review error details and consider simpler approach"],
 		])
 
-		let baseRecommendation = recommendations.get(pattern) || recommendations.get("unknown")!
+		let recommendation = recommendations.get(pattern) || recommendations.get("unknown")!
+
+		// Add timing-based recommendations
+		if (timing) {
+			if (timing.hasBurst) {
+				recommendation += " Multiple errors occurring in rapid succession suggest a systemic issue."
+			} else if (timing.isRegularPattern) {
+				recommendation +=
+					" Errors are occurring in a regular pattern, indicating a potential timing or resource issue."
+			}
+			if (timing.avgTimeBetweenErrors < 1000) {
+				recommendation += " Consider adding delays between operations."
+			}
+		}
 
 		if (severity === "high") {
-			baseRecommendation += ". Immediate attention required."
+			recommendation += " Immediate attention required."
 		}
 		if (isRecurring) {
-			baseRecommendation += " Pattern suggests systematic issue."
+			recommendation += " Pattern suggests systematic issue."
 		}
 
-		return baseRecommendation
+		return recommendation
 	}
 
 	determineRetryStrategy(toolName: string, errorPattern: ErrorAnalysis, retryCount: number): boolean {
@@ -157,15 +281,32 @@ export class ErrorHandlingService implements ErrorHandler, PerformanceTracker {
 			return false
 		}
 
-		// Calculate success probability based on error pattern
+		// Don't retry if there's a burst of errors
+		if (errorPattern.timing?.hasBurst) {
+			return false
+		}
+
+		// Calculate success probability based on error pattern and timing
 		const stats = this.getToolPerformanceStats(toolName)
 		const successRate = stats.successCount / (stats.successCount + stats.failureCount)
-		const patternWeight =
+
+		// Adjust pattern weight based on timing
+		let patternWeight =
 			errorPattern.pattern === ERROR_PATTERNS.TIMEOUT
 				? 0.8
 				: errorPattern.pattern === ERROR_PATTERNS.VALIDATION
 					? 0.7
 					: 0.5
+
+		// Reduce weight if errors follow a regular pattern
+		if (errorPattern.timing?.isRegularPattern) {
+			patternWeight *= 0.7
+		}
+
+		// Reduce weight if errors are happening too quickly
+		if (errorPattern.timing?.avgTimeBetweenErrors < 1000) {
+			patternWeight *= 0.5
+		}
 
 		return successRate * patternWeight > 0.3
 	}

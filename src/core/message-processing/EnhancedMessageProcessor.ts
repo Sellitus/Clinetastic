@@ -14,22 +14,49 @@ import { ErrorHandlingService } from "./ErrorHandlingService"
 import { ErrorContext } from "./error-handling"
 import { enhanceStage, isEnhancedStage } from "./pipeline/StageAdapter"
 
+interface ToolErrorEntry {
+	error: Error
+	timestamp: number
+	context: {
+		input: Record<string, unknown>
+		memory: number
+		cpu: number
+	}
+}
+
+interface ToolPerformanceStats {
+	avgExecutionTime: number
+	successRate: number
+	lastNExecutions: number[]
+	peakMemoryUsage: number
+}
+
 export class EnhancedMessageProcessor implements IMessageProcessor {
 	private pipeline: EnhancedPipeline
 	private tools: Map<string, Tool> = new Map()
 	private hooks: ToolHooks = {}
 	private errorHandlingService: ErrorHandlingService
-	private readonly MAX_TOOL_EXECUTION_TIME = 30000 // 30 seconds
-	private readonly MAX_RETRIES = 3
-	private readonly WARNING_THRESHOLD = 0.8
-	private readonly MAX_SIMILAR_EXECUTIONS = 3
-	private readonly SIMILARITY_THRESHOLD = 0.85
-	private readonly LOOP_TIME_WINDOW = 60000 // 1 minute
+	// Configurable timeouts based on tool complexity
+	private readonly DEFAULT_TOOL_EXECUTION_TIME = 30000 // 30 seconds
+	private readonly EXTENDED_TOOL_EXECUTION_TIME = 120000 // 2 minutes for complex operations
+	private readonly MAX_RETRIES = 5 // Increased for better resilience
+	private readonly WARNING_THRESHOLD = 0.7 // Earlier warnings
+	private readonly MAX_SIMILAR_EXECUTIONS = 4 // Slightly more lenient
+	private readonly SIMILARITY_THRESHOLD = 0.8 // Reduced to avoid false positives
+	private readonly LOOP_TIME_WINDOW = 300000 // 5 minutes for better pattern detection
+
+	// Tool execution time overrides for specific tools
+	private readonly toolTimeoutOverrides: Map<string, number> = new Map([
+		["browser_action", this.EXTENDED_TOOL_EXECUTION_TIME],
+		["execute_command", this.EXTENDED_TOOL_EXECUTION_TIME],
+		["apply_diff", this.EXTENDED_TOOL_EXECUTION_TIME],
+	])
 
 	private toolTimeouts: Map<string, number> = new Map()
 	private toolRetryCount: Map<string, number> = new Map()
 	private lastToolExecution: Map<string, number> = new Map()
-	private toolErrors: Map<string, Error[]> = new Map()
+	private toolErrors: Map<string, ToolErrorEntry[]> = new Map()
+	private toolPerformance: Map<string, ToolPerformanceStats> = new Map()
 	private recentExecutions: Map<
 		string,
 		Array<{
@@ -218,7 +245,7 @@ export class EnhancedMessageProcessor implements IMessageProcessor {
 			const enhancedStage = enhanceStage(stage, {
 				maxRetries: this.MAX_RETRIES,
 				resourceLimits: {
-					timeout: this.MAX_TOOL_EXECUTION_TIME,
+					timeout: this.DEFAULT_TOOL_EXECUTION_TIME,
 				},
 			})
 			this.pipeline.addStage(enhancedStage)
@@ -349,7 +376,8 @@ export class EnhancedMessageProcessor implements IMessageProcessor {
 				this.toolRetryCount.set(toolName, retryCount + 1)
 
 				if (retryCount >= this.MAX_RETRIES) {
-					this.toolTimeouts.set(toolName, this.MAX_TOOL_EXECUTION_TIME)
+					const timeout = this.toolTimeoutOverrides.get(toolName) || this.DEFAULT_TOOL_EXECUTION_TIME
+					this.toolTimeouts.set(toolName, timeout)
 					this.lastToolExecution.set(toolName, Date.now())
 					throw new Error(
 						`Maximum retry attempts (${this.MAX_RETRIES}) exceeded for tool ${toolName}. Tool has been temporarily disabled.`,
@@ -409,9 +437,10 @@ export class EnhancedMessageProcessor implements IMessageProcessor {
 			this.recentExecutions.set(toolName, filteredExecutions)
 
 			const timeoutPromise = new Promise<never>((_, reject) => {
+				const timeout = this.toolTimeoutOverrides.get(toolName) || this.DEFAULT_TOOL_EXECUTION_TIME
 				timeoutId = setTimeout(() => {
-					reject(new Error(`Tool execution timed out after ${this.MAX_TOOL_EXECUTION_TIME}ms`))
-				}, this.MAX_TOOL_EXECUTION_TIME)
+					reject(new Error(`Tool execution timed out after ${timeout}ms`))
+				}, timeout)
 			})
 
 			const executionStartTime = Date.now()
@@ -485,11 +514,41 @@ export class EnhancedMessageProcessor implements IMessageProcessor {
 			const currentMemory = process.memoryUsage()
 			const currentCpu = process.cpuUsage(initialCpu)
 
+			// Update error tracking with enhanced context
 			const errors = this.toolErrors.get(toolName) || []
-			errors.push(normalizedError)
+			const errorEntry = {
+				error: normalizedError,
+				timestamp: Date.now(),
+				context: {
+					input: params,
+					memory: currentMemory.heapUsed,
+					cpu: currentCpu.user + currentCpu.system,
+				},
+			}
+			errors.push(errorEntry)
 			this.toolErrors.set(toolName, errors)
+
+			// Update performance tracking
+			const perfStats = this.toolPerformance.get(toolName) || {
+				avgExecutionTime: 0,
+				successRate: 1,
+				lastNExecutions: [],
+				peakMemoryUsage: 0,
+			}
+
+			perfStats.lastNExecutions.push(executionEndTime - startTime)
+			if (perfStats.lastNExecutions.length > 10) {
+				perfStats.lastNExecutions.shift()
+			}
+			perfStats.avgExecutionTime =
+				perfStats.lastNExecutions.reduce((a, b) => a + b, 0) / perfStats.lastNExecutions.length
+			perfStats.successRate = (perfStats.successRate * (errors.length - 1) + 0) / errors.length
+			perfStats.peakMemoryUsage = Math.max(perfStats.peakMemoryUsage, currentMemory.heapUsed)
+
+			this.toolPerformance.set(toolName, perfStats)
 			this.errorHandlingService.updateToolPerformance(toolName, executionEndTime - startTime, false)
 
+			// Analyze error patterns using enhanced error entries
 			const errorPattern = this.errorHandlingService.analyzeErrorPatterns(errors)
 			const retryCount = this.toolRetryCount.get(toolName) || 0
 			const shouldRetry = this.errorHandlingService.determineRetryStrategy(toolName, errorPattern, retryCount)
@@ -500,15 +559,31 @@ export class EnhancedMessageProcessor implements IMessageProcessor {
 				errorHistory: errors,
 				retryCount,
 				errorPattern,
-				performance: this.errorHandlingService.getToolPerformanceStats(toolName),
+				performance: {
+					...this.errorHandlingService.getToolPerformanceStats(toolName),
+					avgExecutionTime: perfStats.avgExecutionTime,
+					successRate: perfStats.successRate,
+					lastNExecutions: perfStats.lastNExecutions,
+					peakMemoryUsage: perfStats.peakMemoryUsage,
+				},
 				systemState: {
 					memoryUsage: currentMemory,
 					uptime: process.uptime(),
+					lastExecutionStats: {
+						avgTime: perfStats.avgExecutionTime,
+						successRate: perfStats.successRate,
+						peakMemory: perfStats.peakMemoryUsage,
+					},
 				},
 			}
 
 			if (this.hooks.onError) {
-				await this.hooks.onError(normalizedError, errorContext)
+				// Convert enhanced error entries to basic errors for backward compatibility
+				const basicErrorContext = {
+					...errorContext,
+					errorHistory: errors.map((entry) => entry.error),
+				}
+				await this.hooks.onError(normalizedError, basicErrorContext)
 			}
 
 			if (shouldRetry) {
@@ -516,7 +591,8 @@ export class EnhancedMessageProcessor implements IMessageProcessor {
 				this.toolTimeouts.set(toolName, backoffDelay)
 				this.lastToolExecution.set(toolName, Date.now())
 			} else {
-				this.toolTimeouts.set(toolName, this.MAX_TOOL_EXECUTION_TIME * 2)
+				const timeout = this.toolTimeoutOverrides.get(toolName) || this.DEFAULT_TOOL_EXECUTION_TIME
+				this.toolTimeouts.set(toolName, timeout * 2)
 				this.lastToolExecution.set(toolName, Date.now())
 			}
 

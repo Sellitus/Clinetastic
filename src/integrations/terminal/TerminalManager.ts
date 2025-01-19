@@ -162,7 +162,8 @@ export class TerminalManager {
 
 	async getOrCreateTerminal(cwd: string): Promise<TerminalInfo> {
 		// Find available terminal from our pool first (created for this task)
-		const availableTerminal = TerminalRegistry.getAllTerminals().find((t) => {
+		const terminals = await TerminalRegistry.getAllTerminals()
+		const availableTerminal = terminals.find((t: TerminalInfo) => {
 			if (t.busy) {
 				return false
 			}
@@ -178,7 +179,7 @@ export class TerminalManager {
 			return availableTerminal
 		}
 
-		const newTerminalInfo = TerminalRegistry.createTerminal(cwd)
+		const newTerminalInfo = await TerminalRegistry.createTerminal(cwd)
 		this.terminalIds.add(newTerminalInfo.id)
 		return newTerminalInfo
 	}

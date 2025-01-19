@@ -1,4 +1,4 @@
-import { DiffStrategy, DiffResult } from "../types"
+import { DiffStrategy, DiffResult, MatchFailInfo } from "../types"
 import { addLineNumbers, everyLineHasLineNumbers, stripLineNumbers } from "../../../integrations/misc/extract-text"
 
 const BUFFER_LINES = 20 // Number of extra context lines to show before and after matches
@@ -58,13 +58,15 @@ function getSimilarity(original: string, search: string): number {
 export class SearchReplaceDiffStrategy implements DiffStrategy {
 	private fuzzyThreshold: number
 	private bufferLines: number
+	public onMatchFail?: (info: MatchFailInfo) => Promise<void>
 
-	constructor(fuzzyThreshold?: number, bufferLines?: number) {
+	constructor(fuzzyThreshold?: number, bufferLines?: number, onMatchFail?: (info: MatchFailInfo) => Promise<void>) {
 		// Use provided threshold or default to exact matching (1.0)
 		// Note: fuzzyThreshold is inverted in UI (0% = 1.0, 10% = 0.9)
 		// so we use it directly here
 		this.fuzzyThreshold = fuzzyThreshold ?? 1.0
 		this.bufferLines = bufferLines ?? BUFFER_LINES
+		this.onMatchFail = onMatchFail
 	}
 
 	getToolDescription(args: { cwd: string; toolOptions?: { [key: string]: string } }): string {
@@ -265,6 +267,21 @@ Your search/replace content here
 		// Require similarity to meet threshold
 		if (matchIndex === -1 || bestMatchScore < this.fuzzyThreshold) {
 			const searchChunk = searchLines.join("\n")
+
+			// Notify about match failure if callback is provided
+			if (this.onMatchFail) {
+				try {
+					await this.onMatchFail({
+						originalContent,
+						similarity: bestMatchScore,
+						threshold: this.fuzzyThreshold,
+						searchContent: searchChunk,
+						bestMatch: bestMatchContent,
+					})
+				} catch (error) {
+					console.error("Failed to handle match failure:", error)
+				}
+			}
 			const originalContentSection =
 				startLine !== undefined && endLine !== undefined
 					? `\n\nOriginal Content:\n${addLineNumbers(
