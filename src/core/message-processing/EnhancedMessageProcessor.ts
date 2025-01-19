@@ -10,6 +10,77 @@ import { EnhancedPipeline } from "./pipeline/EnhancedPipeline"
 import { EnhancedPipelineStage } from "./pipeline/types"
 import { EnhancedValidationStage } from "./stages/EnhancedValidationStage"
 import { adaptStage, enhanceStage } from "./pipeline/StageAdapter"
+import fs from "fs/promises" // Import fs module
+
+const requestFileContentTool = {
+	name: "request_file_content",
+	description: "Requests the content of a specific file.",
+	validate: (params: any) => {
+		return typeof params === "object" && params !== null && typeof params.path === "string"
+	},
+	execute: async (params: { path: string }) => {
+		try {
+			const content = await fs.readFile(params.path, "utf-8")
+			return { success: true, content: content, error: undefined } // Ensure error is explicitly undefined
+		} catch (error: any) {
+			return { success: false, content: "", error: error.message } // Provide an empty string for content on error
+		}
+	},
+	getParameterSchema: () => ({
+		type: "object",
+		properties: {
+			path: {
+				type: "string",
+				description: "The path to the file to read.",
+			},
+		},
+		required: ["path"],
+	}),
+}
+
+const codeExplanationTool = {
+	name: "code_explanation",
+	description: "Explains a selected block of code.",
+	validate: (params: any) => {
+		return (
+			typeof params === "object" &&
+			params !== null &&
+			typeof params.path === "string" &&
+			typeof params.startLine === "number" &&
+			typeof params.endLine === "number"
+		)
+	},
+	execute: async (params: { path: string; startLine: number; endLine: number }) => {
+		try {
+			const content = await fs.readFile(params.path, "utf-8")
+			const lines = content.split("\n").slice(params.startLine - 1, params.endLine)
+			const codeSnippet = lines.join("\n")
+			// In a real implementation, this would involve calling an LLM
+			// For now, we'll just return the code snippet itself.
+			return { success: true, content: `Explanation for:\n${codeSnippet}\n(LLM explanation would go here)` }
+		} catch (error: any) {
+			return { success: false, content: "", error: error.message }
+		}
+	},
+	getParameterSchema: () => ({
+		type: "object",
+		properties: {
+			path: {
+				type: "string",
+				description: "The path to the file containing the code.",
+			},
+			startLine: {
+				type: "number",
+				description: "The starting line number of the code block.",
+			},
+			endLine: {
+				type: "number",
+				description: "The ending line number of the code block.",
+			},
+		},
+		required: ["path", "startLine", "endLine"],
+	}),
+}
 
 /**
  * Enhanced message processor implementation with support for:
@@ -28,6 +99,10 @@ export class EnhancedMessageProcessor implements IMessageProcessor {
 
 		// Add default validation stage
 		this.addPipelineStage(new EnhancedValidationStage())
+
+		// Register the new tools
+		this.registerTool(requestFileContentTool)
+		this.registerTool(codeExplanationTool)
 	}
 
 	/**

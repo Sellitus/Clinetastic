@@ -9,6 +9,7 @@ export const READONLY_ALLOWED_TOOLS = [
 	"access_mcp_resource",
 	"ask_followup_question",
 	"attempt_completion",
+	"request_file_content", // Added to read-only tools
 ] as const
 
 // Code mode has access to all tools
@@ -25,6 +26,8 @@ export const CODE_ALLOWED_TOOLS = [
 	"access_mcp_resource",
 	"ask_followup_question",
 	"attempt_completion",
+	"request_file_content", // Added to code tools
+	"code_explanation", // Added code explanation tool
 ] as const
 
 // Tool name types for type safety

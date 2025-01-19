@@ -37,3 +37,24 @@ export function estimateTokens(text: string): number {
 
 	return Math.ceil(estimate)
 }
+
+/**
+ * Truncates a text string to a maximum number of tokens.
+ *
+ * @param text - The input text to truncate.
+ * @param maxTokens - The maximum number of tokens to keep.
+ * @returns The truncated text.
+ */
+export function truncateTextToTokenLimit(text: string, maxTokens: number): string {
+	const words = text.split(/\s+/)
+	let tokenCount = 0
+	let truncatedText = ""
+	for (const word of words) {
+		tokenCount += estimateTokens(word + " ") // Add space to simulate word boundary
+		if (tokenCount > maxTokens) {
+			break
+		}
+		truncatedText += word + " "
+	}
+	return truncatedText.trim()
+}
