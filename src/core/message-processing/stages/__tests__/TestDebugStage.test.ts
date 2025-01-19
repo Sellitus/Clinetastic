@@ -19,10 +19,26 @@ interface ExtendedMessageContext extends MessageContext {
 	}
 }
 
+/**
+ * Test suite for TestDebugStage
+ *
+ * Tests cover the main functionality of the test debugging pipeline stage:
+ * 1. Context initialization and state management
+ * 2. Error pattern analysis and grouping
+ * 3. Test revision suggestions
+ * 4. Threshold-based behavior triggers
+ */
 describe("TestDebugStage", () => {
 	let stage: TestDebugStage
 	let mockContext: ExtendedMessageContext
 
+	/**
+	 * Set up fresh stage and context before each test.
+	 * Mock context includes:
+	 * - Basic message and mode information
+	 * - Empty environment details
+	 * - Sample test metadata for analysis
+	 */
 	beforeEach(() => {
 		stage = new TestDebugStage()
 		mockContext = {
@@ -45,6 +61,15 @@ describe("TestDebugStage", () => {
 		}
 	})
 
+	/**
+	 * Test: Initial Context Creation
+	 *
+	 * Verifies that the stage properly initializes debug context when
+	 * processing a message for the first time. The initialized context
+	 * should have:
+	 * - fixAttempts counter set to 0
+	 * - empty previousErrors array
+	 */
 	it("should initialize test debug context if not present", async () => {
 		const result = (await stage.process(mockContext)) as ExtendedMessageContext
 		expect(result).toHaveProperty("testDebug")
@@ -54,12 +79,33 @@ describe("TestDebugStage", () => {
 		})
 	})
 
+	/**
+	 * Test: Fix Attempt Counter
+	 *
+	 * Verifies that the stage correctly tracks fix attempts by:
+	 * 1. Processing an initial message to create context
+	 * 2. Processing a second message to increment counter
+	 * 3. Checking that counter was incremented exactly once
+	 */
 	it("should increment fix attempts on each process", async () => {
 		const initialResult = (await stage.process(mockContext)) as ExtendedMessageContext
 		const secondResult = (await stage.process(initialResult)) as ExtendedMessageContext
 		expect(secondResult.testDebug?.fixAttempts).toBe(1)
 	})
 
+	/**
+	 * Test: High-Level Analysis Triggering
+	 *
+	 * Verifies that the stage performs pattern analysis after reaching
+	 * the HIGH_LEVEL_ANALYSIS_THRESHOLD (3 attempts). Tests:
+	 * 1. Context initialization
+	 * 2. Adding multiple similar errors
+	 * 3. Processing until threshold is reached
+	 * 4. Checking that analysis was performed and results stored
+	 *
+	 * Uses identical errors to ensure pattern detection works in the
+	 * simplest case before testing more complex scenarios.
+	 */
 	it("should perform high-level analysis after threshold attempts", async () => {
 		let context = mockContext
 		context = (await stage.process(context)) as ExtendedMessageContext // Initialize

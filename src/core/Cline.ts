@@ -56,6 +56,7 @@ import { modes, defaultModeSlug } from "../shared/modes"
 import { truncateConversation } from "./sliding-window"
 import { registerMessageProcessingStages } from "./message-processing/stages"
 import { MessageProcessor } from "./message-processing/MessageProcessor"
+import { ResultMetadata } from "./message-processing/types"
 import { ClineProvider, GlobalFileNames } from "./webview/ClineProvider"
 import { detectCodeOmission } from "../integrations/editor/detect-omission"
 import { BrowserSession } from "../services/browser/BrowserSession"
@@ -269,6 +270,7 @@ export class Cline {
 		type: ClineAsk,
 		text?: string,
 		partial?: boolean,
+		metadata?: ResultMetadata,
 	): Promise<{ response: ClineAskResponse; text?: string; images?: string[] }> {
 		// If this Cline instance was aborted by the provider, then the only thing keeping us alive is a promise still running in the background, in which case we don't want to send its result to the webview as it is attached to a new instance of Cline now. So we can safely ignore the result of any active promises, and this class will be deallocated. (Although we set Cline = undefined in provider, that simply removes the reference to this instance, but the instance is still alive until this promise resolves or rejects.)
 		if (this.abort) {
@@ -298,7 +300,7 @@ export class Cline {
 					// this.askResponseImages = undefined
 					askTs = Date.now()
 					this.lastMessageTs = askTs
-					await this.addToClineMessages({ ts: askTs, type: "ask", ask: type, text, partial })
+					await this.addToClineMessages({ ts: askTs, type: "ask", ask: type, text, partial, metadata })
 					await this.providerRef.deref()?.postStateToWebview()
 					throw new Error("Current ask promise was ignored 2")
 				}
@@ -333,7 +335,7 @@ export class Cline {
 					this.askResponseImages = undefined
 					askTs = Date.now()
 					this.lastMessageTs = askTs
-					await this.addToClineMessages({ ts: askTs, type: "ask", ask: type, text })
+					await this.addToClineMessages({ ts: askTs, type: "ask", ask: type, text, metadata })
 					await this.providerRef.deref()?.postStateToWebview()
 				}
 			}
@@ -345,7 +347,7 @@ export class Cline {
 			this.askResponseImages = undefined
 			askTs = Date.now()
 			this.lastMessageTs = askTs
-			await this.addToClineMessages({ ts: askTs, type: "ask", ask: type, text })
+			await this.addToClineMessages({ ts: askTs, type: "ask", ask: type, text, metadata })
 			await this.providerRef.deref()?.postStateToWebview()
 		}
 
@@ -366,7 +368,13 @@ export class Cline {
 		this.askResponseImages = images
 	}
 
-	async say(type: ClineSay, text?: string, images?: string[], partial?: boolean): Promise<undefined> {
+	async say(
+		type: ClineSay,
+		text?: string,
+		images?: string[],
+		partial?: boolean,
+		metadata?: ResultMetadata,
+	): Promise<undefined> {
 		if (this.abort) {
 			throw new Error("Cline instance aborted")
 		}
@@ -388,7 +396,15 @@ export class Cline {
 					// this is a new partial message, so add it with partial state
 					const sayTs = Date.now()
 					this.lastMessageTs = sayTs
-					await this.addToClineMessages({ ts: sayTs, type: "say", say: type, text, images, partial })
+					await this.addToClineMessages({
+						ts: sayTs,
+						type: "say",
+						say: type,
+						text,
+						images,
+						partial,
+						metadata,
+					})
 					await this.providerRef.deref()?.postStateToWebview()
 				}
 			} else {
@@ -411,7 +427,7 @@ export class Cline {
 					// this is a new partial=false message, so add it like normal
 					const sayTs = Date.now()
 					this.lastMessageTs = sayTs
-					await this.addToClineMessages({ ts: sayTs, type: "say", say: type, text, images })
+					await this.addToClineMessages({ ts: sayTs, type: "say", say: type, text, images, metadata })
 					await this.providerRef.deref()?.postStateToWebview()
 				}
 			}
@@ -419,7 +435,7 @@ export class Cline {
 			// this is a new non-partial message, so add it like normal
 			const sayTs = Date.now()
 			this.lastMessageTs = sayTs
-			await this.addToClineMessages({ ts: sayTs, type: "say", say: type, text, images })
+			await this.addToClineMessages({ ts: sayTs, type: "say", say: type, text, images, metadata })
 			await this.providerRef.deref()?.postStateToWebview()
 		}
 	}
