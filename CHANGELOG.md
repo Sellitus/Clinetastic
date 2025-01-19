@@ -1,4 +1,4 @@
-# Roo Cline Changelog
+# Clinetastic Changelog
 
 ## [3.1.6]
 
@@ -45,7 +45,7 @@
 
 ## [3.0.0]
 
--   This release adds chat modes! Now you can ask Roo Cline questions about system architecture or the codebase without immediately jumping into writing code. You can even assign different API configuration profiles to each mode if you prefer to use different models for thinking vs coding. Would love feedback in the new Roo Cline Reddit! https://www.reddit.com/r/roocline
+-   This release adds chat modes! Now you can ask Clinetastic questions about system architecture or the codebase without immediately jumping into writing code. You can even assign different API configuration profiles to each mode if you prefer to use different models for thinking vs coding. Would love feedback in the new Clinetastic Reddit! https://www.reddit.com/r/clinetastic
 
 ## [2.2.46]
 
@@ -166,7 +166,7 @@
 
 ## [2.2.16]
 
--   Incorporate Premshay's [PR](https://github.com/RooVetGit/Roo-Cline/pull/60) to add support for Amazon Nova and Meta Llama Models via Bedrock (3, 3.1, 3.2) and unified Bedrock calls using BedrockClient and Bedrock Runtime API
+-   Incorporate Premshay's [PR](https://github.com/RooVetGit/Clinetastic/pull/60) to add support for Amazon Nova and Meta Llama Models via Bedrock (3, 3.1, 3.2) and unified Bedrock calls using BedrockClient and Bedrock Runtime API
 
 ## [2.2.14 - 2.2.15]
 
@@ -238,7 +238,7 @@
 
 ## [2.1.15]
 
--   Incorporate dbasclpy's [PR](https://github.com/RooVetGit/Roo-Cline/pull/54) to add support for gemini-exp-1206
+-   Incorporate dbasclpy's [PR](https://github.com/RooVetGit/Clinetastic/pull/54) to add support for gemini-exp-1206
 -   Make it clear that diff editing is very experimental
 
 ## [2.1.14]
@@ -248,7 +248,7 @@
 
 ## [2.1.13]
 
--   Fix https://github.com/RooVetGit/Roo-Cline/issues/50 where sound effects were not respecting settings
+-   Fix https://github.com/RooVetGit/Clinetastic/issues/50 where sound effects were not respecting settings
 
 ## [2.1.12]
 
@@ -256,7 +256,7 @@
 
 ## [2.1.11]
 
--   Incorporate lloydchang's [PR](https://github.com/RooVetGit/Roo-Cline/pull/42) to add support for OpenRouter compression
+-   Incorporate lloydchang's [PR](https://github.com/RooVetGit/Clinetastic/pull/42) to add support for OpenRouter compression
 
 ## [2.1.10]
 
@@ -268,7 +268,7 @@
 
 ## [2.1.8]
 
--   Roo Cline now allows configuration of which commands are allowed without approval!
+-   Clinetastic now allows configuration of which commands are allowed without approval!
 
 ## [2.1.7]
 
@@ -282,7 +282,7 @@
 
 ## [2.1.6]
 
--   Roo Cline now runs in all VSCode-compatible editors
+-   Clinetastic now runs in all VSCode-compatible editors
 
 ## [2.1.5]
 
@@ -290,11 +290,11 @@
 
 ## [2.1.4]
 
--   Roo Cline now can run side-by-side with Cline
+-   Clinetastic now can run side-by-side with Cline
 
 ## [2.1.3]
 
--   Roo Cline now allows browser actions without approval when `alwaysAllowBrowser` is true
+-   Clinetastic now allows browser actions without approval when `alwaysAllowBrowser` is true
 
 ## [2.1.2]
 
