@@ -69,13 +69,19 @@ export class SearchReplaceDiffStrategy implements DiffStrategy {
 
 	getToolDescription(args: { cwd: string; toolOptions?: { [key: string]: string } }): string {
 		return `## apply_diff
-Description: Request to replace existing code using a search and replace block.
-This tool allows for precise, surgical replaces to files by specifying exactly what content to search for and what to replace it with.
-The tool will maintain proper indentation and formatting while making changes.
-Only a single operation is allowed per tool use.
-The SEARCH section must exactly match existing content including whitespace and indentation.
-If you're not confident in the exact content to search for, use the read_file tool first to get the exact content.
-When applying the diffs, be extra careful to remember to change any closing brackets or other syntax that may be affected by the diff farther down in the file.
+Description: Request to make precise, surgical changes to existing code. This is the preferred tool for modifying existing files because it:
+1. Ensures exact matching of target code to prevent accidental modifications
+2. Preserves code formatting and indentation automatically
+3. Provides detailed error messages if the target code cannot be found
+4. Maintains file integrity by only changing the specified section
+
+Best practices for using this tool:
+1. Always use read_file first to get exact content and line numbers
+2. Include sufficient context in the SEARCH section (not just the line you want to change)
+3. Pay attention to whitespace, indentation, and closing delimiters
+4. Make one focused change per operation for better reliability
+
+The tool will validate the exact match including whitespace before making any changes, making it safer than write_to_file for modifications.
 
 Parameters:
 - path: (required) The path of the file to modify (relative to the current working directory ${args.cwd})
