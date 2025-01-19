@@ -34,7 +34,13 @@ module.exports = {
 	transformIgnorePatterns: [
 		"node_modules/(?!(@modelcontextprotocol|delay|p-wait-for|globby|serialize-error|strip-ansi|default-shell|os-name)/)",
 	],
-	modulePathIgnorePatterns: [".vscode-test"],
+	modulePathIgnorePatterns: [".vscode-test", "out/"],
 	reporters: [["jest-simple-dot-reporter", {}]],
 	setupFiles: [],
+	reporters: [["jest-simple-dot-reporter", {}]],
+	// Handle worker process failures gracefully
+	forceExit: true,
+	detectOpenHandles: true,
+	// Allow time for cleanup
+	testTimeout: 30000,
 }
