@@ -89,6 +89,12 @@ export class Cline {
 	private lastMessageTs?: number
 	private consecutiveMistakeCount: number = 0
 	private consecutiveMistakeCountForApplyDiff: Map<string, number> = new Map()
+	private toolTimeouts: Map<string, number> = new Map()
+	private readonly MAX_TOOL_EXECUTION_TIME = 60000 // 60 seconds
+	private readonly MAX_RETRIES = 3
+	private toolRetryCount: Map<string, number> = new Map()
+	private lastToolExecution: Map<string, number> = new Map()
+	private toolErrors: Map<string, Error[]> = new Map()
 	private providerRef: WeakRef<ClineProvider>
 	private abort: boolean = false
 	didFinishAborting = false

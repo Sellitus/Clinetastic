@@ -1,25 +1,25 @@
 {
 	"name": "clinetastic",
 	"displayName": "Clinetastic",
-	"description": "A fork of Cline, an autonomous coding agent, with some added experimental configuration and automation features.",
-	"publisher": "RooVeterinaryInc",
-	"version": "3.1.6",
+	"description": "An autonomous coding agent focused on token efficiency and model flexibility, enabling smarter decision-making and adaptable AI assistance.",
+	"publisher": "sellitus",
+	"version": "1.0.0",
 	"icon": "assets/icons/rocket.png",
 	"galleryBanner": {
-		"color": "#617A91",
+		"color": "#2C3E50",
 		"theme": "dark"
 	},
 	"engines": {
 		"vscode": "^1.84.0"
 	},
 	"author": {
-		"name": "Roo Vet"
+		"name": "sellitus"
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/RooVetGit/Clinetastic"
+		"url": "https://github.com/sellitus/Clinetastic"
 	},
-	"homepage": "https://github.com/RooVetGit/Clinetastic",
+	"homepage": "https://github.com/sellitus/Clinetastic",
 	"categories": [
 		"AI",
 		"Chat",

@@ -77,9 +77,18 @@ Description: Request to make precise, surgical changes to existing code. This is
 
 Best practices for using this tool:
 1. Always use read_file first to get exact content and line numbers
-2. Include sufficient context in the SEARCH section (not just the line you want to change)
+2. Include sufficient context in the SEARCH section (3-5 lines minimum)
 3. Pay attention to whitespace, indentation, and closing delimiters
 4. Make one focused change per operation for better reliability
+5. For large changes, break them down into multiple smaller diffs
+6. When changing function/class definitions, include the entire block
+7. Include closing brackets/braces in both search and replace sections
+
+Common pitfalls to avoid:
+1. Using too little context (increases risk of wrong matches)
+2. Forgetting to update related code sections
+3. Not accounting for indentation changes
+4. Missing closing delimiters in search/replace blocks
 
 The tool will validate the exact match including whitespace before making any changes, making it safer than write_to_file for modifications.
 
@@ -277,9 +286,45 @@ Your search/replace content here
 				startLine || endLine
 					? ` at ${startLine ? `start: ${startLine}` : "start"} to ${endLine ? `end: ${endLine}` : "end"}`
 					: ""
+			// Analyze potential issues
+			const issues: string[] = []
+
+			// Check for common problems
+			if (searchLines.length < 3) {
+				issues.push(
+					"Search content is too short (less than 3 lines). Include more context for reliable matching.",
+				)
+			}
+
+			if (searchContent.trim() !== searchContent) {
+				issues.push("Search content has extra whitespace at start/end. Check for exact whitespace matching.")
+			}
+
+			const indentationMismatch = searchLines.some((line, i) => {
+				const originalLine = originalLines[matchIndex + i]
+				if (!originalLine || line.length === 0 || originalLine.length === 0) return false
+
+				const searchIndent = line.match(/^\s*/)
+				const originalIndent = originalLine.match(/^\s*/)
+
+				return searchIndent && originalIndent && searchIndent[0] !== originalIndent[0]
+			})
+			if (indentationMismatch) {
+				issues.push("Indentation patterns don't match. Ensure exact indentation is preserved.")
+			}
+
+			const openBrackets = (searchContent.match(/[({[]/g) || []).length
+			const closeBrackets = (searchContent.match(/[)}\]]/g) || []).length
+			if (openBrackets !== closeBrackets) {
+				issues.push("Unbalanced brackets/braces. Ensure all delimiters are properly matched.")
+			}
+
+			const recommendations =
+				issues.length > 0 ? "\n\nRecommendations:\n" + issues.map((issue) => `- ${issue}`).join("\n") : ""
+
 			return {
 				success: false,
-				error: `No sufficiently similar match found${lineRange} (${Math.floor(bestMatchScore * 100)}% similar, needs ${Math.floor(this.fuzzyThreshold * 100)}%)\n\nDebug Info:\n- Similarity Score: ${Math.floor(bestMatchScore * 100)}%\n- Required Threshold: ${Math.floor(this.fuzzyThreshold * 100)}%\n- Search Range: ${startLine && endLine ? `lines ${startLine}-${endLine}` : "start to end"}\n\nSearch Content:\n${searchChunk}${bestMatchSection}${originalContentSection}`,
+				error: `No sufficiently similar match found${lineRange} (${Math.floor(bestMatchScore * 100)}% similar, needs ${Math.floor(this.fuzzyThreshold * 100)}%)\n\nDebug Info:\n- Similarity Score: ${Math.floor(bestMatchScore * 100)}%\n- Required Threshold: ${Math.floor(this.fuzzyThreshold * 100)}%\n- Search Range: ${startLine && endLine ? `lines ${startLine}-${endLine}` : "start to end"}\n\nSearch Content:\n${searchChunk}${bestMatchSection}${originalContentSection}${recommendations}`,
 			}
 		}
 

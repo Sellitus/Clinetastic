@@ -34,12 +34,24 @@ export function activate(context: vscode.ExtensionContext) {
 		context.globalState.update("allowedCommands", defaultCommands)
 	}
 
+	// Create the initial provider
 	const sidebarProvider = new ClineProvider(context, outputChannel)
 
+	// Register the provider with a wrapper that handles disposal
 	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(ClineProvider.sideBarId, sidebarProvider, {
-			webviewOptions: { retainContextWhenHidden: true },
-		}),
+		vscode.window.registerWebviewViewProvider(
+			ClineProvider.sideBarId,
+			{
+				resolveWebviewView: (webviewView) => {
+					// Clear any existing state before resolving the view
+					sidebarProvider.clearTask()
+					sidebarProvider.resolveWebviewView(webviewView)
+				},
+			},
+			{
+				webviewOptions: { retainContextWhenHidden: true },
+			},
+		),
 	)
 
 	context.subscriptions.push(
@@ -65,10 +77,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const openClineInNewTab = async () => {
 		outputChannel.appendLine("Opening Cline in new tab")
-		// (this example uses webviewProvider activation event which is necessary to deserialize cached webview, but since we use retainContextWhenHidden, we don't need to use that event)
-		// https://github.com/microsoft/vscode-extension-samples/blob/main/webview-sample/src/extension.ts
-		const tabProvider = new ClineProvider(context, outputChannel)
-		//const column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined
+
 		const lastCol = Math.max(...vscode.window.visibleTextEditors.map((editor) => editor.viewColumn || 0))
 
 		// Check if there are any visible text editors, otherwise open a new group to the right
@@ -83,12 +92,20 @@ export function activate(context: vscode.ExtensionContext) {
 			retainContextWhenHidden: true,
 			localResourceRoots: [context.extensionUri],
 		})
-		// TODO: use better svg icon with light and dark variants (see https://stackoverflow.com/questions/58365687/vscode-extension-iconpath)
 
 		panel.iconPath = {
 			light: vscode.Uri.joinPath(context.extensionUri, "assets", "icons", "rocket.png"),
 			dark: vscode.Uri.joinPath(context.extensionUri, "assets", "icons", "rocket.png"),
 		}
+
+		// Create a new provider instance for this tab
+		const tabProvider = new ClineProvider(context, outputChannel)
+
+		// Handle panel disposal
+		panel.onDidDispose(() => {
+			tabProvider.dispose()
+		})
+
 		tabProvider.resolveWebviewView(panel)
 
 		// Lock the editor group so clicking on files doesn't open them over the panel

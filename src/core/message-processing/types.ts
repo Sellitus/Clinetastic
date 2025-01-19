@@ -1,10 +1,6 @@
 import { Mode } from "../../shared/modes"
 import { ApiConfiguration, ModelInfo } from "../../shared/api"
 
-/**
- * Core types for the message processing system
- */
-
 export interface EnvironmentDetails {
 	workingDirectory: string
 	visibleFiles: string[]
@@ -40,7 +36,24 @@ export interface MessageContext {
 	/** Message attachments */
 	attachments?: MessageAttachment[]
 	/** Stage processing metadata */
-	metadata?: Record<string, any>
+	metadata?: {
+		/** Branch execution details */
+		branchExecution?: {
+			branchId: string
+			evaluatedBranches: number
+			startTime: number
+			totalStages: number
+			completedStages?: number
+			progress?: number
+		}
+		/** Parallel execution details */
+		parallelExecution?: {
+			totalTime: number
+			stageId: string
+		}
+		/** Stage-specific metadata */
+		[key: string]: any
+	}
 }
 
 export interface ToolExecutionContext {
@@ -50,6 +63,125 @@ export interface ToolExecutionContext {
 	params: Record<string, any>
 	/** Validation state */
 	validated: boolean
+	/** Maximum number of retry attempts */
+	maxRetries?: number
+	/** Delay between retries in milliseconds */
+	retryDelay?: number
+	/** Whether to use exponential backoff for retries */
+	useExponentialBackoff?: boolean
+	/** Resource limits */
+	resourceLimits?: {
+		/** Maximum memory usage in bytes */
+		maxMemory?: number
+		/** Maximum CPU time in milliseconds */
+		maxCpu?: number
+		/** Operation timeout in milliseconds */
+		timeout?: number
+	}
+	/** Error handling configuration */
+	errorHandling?: {
+		/** Whether to ignore errors and continue */
+		ignoreErrors?: boolean
+		/** Value to return on error if ignoring errors */
+		fallbackValue?: any
+		/** Function to transform errors before handling */
+		errorTransform?: (error: Error) => Error
+	}
+}
+
+/** Common metadata structure for results */
+export interface ResultMetadata {
+	/** Execution timing information */
+	timing: {
+		/** Total execution time */
+		totalTime: number
+		/** Time spent in initialization */
+		initTime: number
+		/** Time spent in actual execution */
+		executionTime: number
+		/** Time spent in cleanup */
+		cleanupTime: number
+		/** Time spent waiting for resources */
+		waitTime?: number
+	}
+	/** Pipeline metrics if applicable */
+	pipelineMetrics?: {
+		/** Total pipeline execution time */
+		totalTime: number
+		/** Metrics per pipeline stage */
+		stageMetrics: Map<
+			string,
+			{
+				startTime: number
+				endTime: number
+				duration: number
+			}
+		>
+		/** Groups of stages executed in parallel */
+		parallelGroups: string[][]
+	}
+	/** Execution path through pipeline */
+	executionPath?: string[]
+	/** Resource utilization metrics */
+	resources: {
+		/** Memory usage statistics */
+		memory: {
+			/** Peak memory usage */
+			peakUsage: number
+			/** Average memory usage */
+			averageUsage: number
+			/** Memory allocated */
+			allocated: number
+			/** Memory freed */
+			freed: number
+		}
+		/** CPU utilization */
+		cpu: {
+			/** Peak CPU usage */
+			peakUsage: number
+			/** Average CPU usage */
+			averageUsage: number
+			/** User CPU time */
+			userTime: number
+			/** System CPU time */
+			systemTime: number
+		}
+		/** File system operations */
+		io?: {
+			/** Bytes read */
+			bytesRead: number
+			/** Bytes written */
+			bytesWritten: number
+			/** Number of read operations */
+			readOps: number
+			/** Number of write operations */
+			writeOps: number
+		}
+	}
+	/** Performance optimization hints */
+	optimizationHints?: {
+		/** Suggested improvements */
+		suggestions: string[]
+		/** Potential bottlenecks */
+		bottlenecks: string[]
+		/** Resource usage warnings */
+		warnings: string[]
+		/** Caching recommendations */
+		cacheRecommendations?: string[]
+	}
+	/** Tool-specific metrics */
+	toolMetrics?: Record<string, any>
+}
+
+export interface ToolResult {
+	/** Whether tool execution was successful */
+	success: boolean
+	/** Result content */
+	content: string
+	/** Any errors that occurred */
+	error?: Error
+	/** Execution metrics and metadata */
+	metadata?: ResultMetadata
 }
 
 export interface ProcessingResult {
@@ -61,26 +193,8 @@ export interface ProcessingResult {
 	error?: Error
 	/** Tool execution result if applicable */
 	toolResult?: ToolResult
-	/** Additional processing metadata */
-	metadata?: Record<string, any>
-}
-
-export interface ToolResult {
-	/** Whether tool execution was successful */
-	success: boolean
-	/** Result content */
-	content: string
-	/** Any errors that occurred */
-	error?: Error
-	/** Additional metadata */
-	metadata?: Record<string, any>
-}
-
-export interface PipelineStage {
-	/** Unique identifier for the stage */
-	id: string
-	/** Process the message context */
-	process(context: MessageContext): Promise<MessageContext>
+	/** Processing metrics and metadata */
+	metadata?: ResultMetadata
 }
 
 export interface Tool {
@@ -96,33 +210,27 @@ export interface Tool {
 	getParameterSchema(): Record<string, any>
 }
 
+export interface ToolErrorMetadata {
+	toolName: string
+	executionTime: number
+	errorHistory: Error[]
+	retryCount: number
+}
+
 export interface ToolHooks {
 	/** Called before tool execution */
 	beforeExecution?(context: MessageContext): Promise<void>
 	/** Called after tool execution */
 	afterExecution?(result: ToolResult): Promise<void>
 	/** Called if tool execution fails */
-	onError?(error: Error): Promise<void>
+	onError?(error: Error, metadata?: ToolErrorMetadata): Promise<void>
 }
 
-export interface PromptCache {
-	/** Get cached prompt */
-	get(key: string): Promise<string | null>
-	/** Set prompt in cache */
-	set(key: string, prompt: string): Promise<void>
-	/** Clear cache */
-	clear(): Promise<void>
-}
-
-export interface PromptBuilder {
-	/** Add system prompt */
-	withSystemPrompt(): PromptBuilder
-	/** Add custom instructions */
-	withCustomInstructions(instructions?: string): PromptBuilder
-	/** Add environment details */
-	withEnvironmentDetails(details: EnvironmentDetails): PromptBuilder
-	/** Build final prompt */
-	build(): Promise<string>
+export interface PipelineStage {
+	/** Unique identifier for the stage */
+	id: string
+	/** Process the message context */
+	process(context: MessageContext): Promise<MessageContext>
 }
 
 export interface MessageProcessor {
