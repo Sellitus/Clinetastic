@@ -148,10 +148,18 @@
 					"default": [
 						"npm test",
 						"npm install",
+						"npm run build",
+						"npm run lint",
+						"npm run check-types",
 						"tsc",
 						"git log",
 						"git diff",
-						"git show"
+						"git show",
+						"git status",
+						"git branch",
+						"jest",
+						"prettier --write",
+						"eslint --fix"
 					],
 					"description": "Commands that can be auto-executed when 'Always approve execute operations' is enabled"
 				},

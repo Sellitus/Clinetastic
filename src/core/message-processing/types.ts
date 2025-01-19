@@ -39,6 +39,8 @@ export interface MessageContext {
 	modelInfo?: ModelInfo
 	/** Message attachments */
 	attachments?: MessageAttachment[]
+	/** Stage processing metadata */
+	metadata?: Record<string, any>
 }
 
 export interface ToolExecutionContext {
@@ -59,6 +61,8 @@ export interface ProcessingResult {
 	error?: Error
 	/** Tool execution result if applicable */
 	toolResult?: ToolResult
+	/** Additional processing metadata */
+	metadata?: Record<string, any>
 }
 
 export interface ToolResult {
