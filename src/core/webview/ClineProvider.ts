@@ -2028,8 +2028,8 @@ export class ClineProvider implements vscode.WebviewViewProvider {
 			enhancementApiConfigId,
 			experimentalDiffStrategy: experimentalDiffStrategy ?? false,
 			autoApprovalEnabled: autoApprovalEnabled ?? false,
-			planningModel: planningModel ?? "claude-3-5-haiku-20241022",
-			executionModel: executionModel ?? "claude-3-5-sonnet-20241022",
+			planningModel: planningModel ?? "",
+			executionModel: executionModel ?? "",
 		}
 	}
 
