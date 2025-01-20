@@ -2519,6 +2519,14 @@ export class Cline {
 		])
 	}
 
+	async dispose() {
+		// Clean up resources
+		await this.browserSession.closeBrowser()
+		this.terminalManager.disposeAll()
+		await this.urlContentFetcher.closeBrowser()
+		await this.diffViewProvider.reset()
+	}
+
 	async getEnvironmentDetails(includeFileDetails: boolean = false) {
 		let details = ""
 
