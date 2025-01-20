@@ -5,6 +5,7 @@ import { HistoryItem } from "./HistoryItem"
 import { McpServer } from "./mcp"
 import { GitCommit } from "../utils/git"
 import { Mode, CustomPrompts } from "./modes"
+import { ResultMetadata } from "../core/message-processing/types"
 
 // webview will hold state
 export interface ExtensionMessage {
@@ -96,6 +97,8 @@ export interface ExtensionState {
 	enhancementApiConfigId?: string
 	experimentalDiffStrategy?: boolean
 	autoApprovalEnabled?: boolean
+	planningModel?: string
+	executionModel?: string
 }
 
 export interface ClineMessage {
@@ -106,6 +109,7 @@ export interface ClineMessage {
 	text?: string
 	images?: string[]
 	partial?: boolean
+	metadata?: ResultMetadata
 }
 
 export type ClineAsk =

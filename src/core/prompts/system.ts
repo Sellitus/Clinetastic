@@ -110,7 +110,7 @@ ${getToolUseGuidelinesSection()}
 
 ${await getMcpServersSection(mcpHub, diffStrategy)}
 
-${getCapabilitiesSection(cwd, supportsComputerUse, mcpHub, diffStrategy)}
+${getCapabilitiesSection(cwd, supportsComputerUse, mcpHub, diffStrategy, 500)}
 
 ${getRulesSection(cwd, supportsComputerUse, diffStrategy)}
 

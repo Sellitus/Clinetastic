@@ -1,4 +1,4 @@
-import type { DiffStrategy } from "./types"
+import type { DiffStrategy, MatchFailInfo } from "./types"
 import { UnifiedDiffStrategy } from "./strategies/unified"
 import { SearchReplaceDiffStrategy } from "./strategies/search-replace"
 import { NewUnifiedDiffStrategy } from "./strategies/new-unified"
@@ -11,11 +11,12 @@ export function getDiffStrategy(
 	model: string,
 	fuzzyMatchThreshold?: number,
 	experimentalDiffStrategy: boolean = false,
+	onMatchFail?: (info: MatchFailInfo) => Promise<void>,
 ): DiffStrategy {
 	if (experimentalDiffStrategy) {
 		return new NewUnifiedDiffStrategy(fuzzyMatchThreshold)
 	}
-	return new SearchReplaceDiffStrategy(fuzzyMatchThreshold)
+	return new SearchReplaceDiffStrategy(fuzzyMatchThreshold, undefined, onMatchFail)
 }
 
 export type { DiffStrategy }

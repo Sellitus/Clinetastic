@@ -1,4 +1,4 @@
-import { DiffStrategy, DiffResult } from "../types"
+import { DiffStrategy, DiffResult, MatchFailInfo } from "../types"
 import { addLineNumbers, everyLineHasLineNumbers, stripLineNumbers } from "../../../integrations/misc/extract-text"
 
 const BUFFER_LINES = 20 // Number of extra context lines to show before and after matches
@@ -58,24 +58,32 @@ function getSimilarity(original: string, search: string): number {
 export class SearchReplaceDiffStrategy implements DiffStrategy {
 	private fuzzyThreshold: number
 	private bufferLines: number
+	public onMatchFail?: (info: MatchFailInfo) => Promise<void>
 
-	constructor(fuzzyThreshold?: number, bufferLines?: number) {
+	constructor(fuzzyThreshold?: number, bufferLines?: number, onMatchFail?: (info: MatchFailInfo) => Promise<void>) {
 		// Use provided threshold or default to exact matching (1.0)
 		// Note: fuzzyThreshold is inverted in UI (0% = 1.0, 10% = 0.9)
 		// so we use it directly here
 		this.fuzzyThreshold = fuzzyThreshold ?? 1.0
 		this.bufferLines = bufferLines ?? BUFFER_LINES
+		this.onMatchFail = onMatchFail
 	}
 
 	getToolDescription(args: { cwd: string; toolOptions?: { [key: string]: string } }): string {
 		return `## apply_diff
-Description: Request to replace existing code using a search and replace block.
-This tool allows for precise, surgical replaces to files by specifying exactly what content to search for and what to replace it with.
-The tool will maintain proper indentation and formatting while making changes.
-Only a single operation is allowed per tool use.
-The SEARCH section must exactly match existing content including whitespace and indentation.
-If you're not confident in the exact content to search for, use the read_file tool first to get the exact content.
-When applying the diffs, be extra careful to remember to change any closing brackets or other syntax that may be affected by the diff farther down in the file.
+Description: Request to make precise, surgical changes to existing code. This is the preferred tool for modifying existing files because it:
+1. Ensures exact matching of target code to prevent accidental modifications
+2. Preserves code formatting and indentation automatically
+3. Provides detailed error messages if the target code cannot be found
+4. Maintains file integrity by only changing the specified section
+
+Best practices for using this tool:
+1. Always use read_file first to get exact content and line numbers
+2. Include sufficient context in the SEARCH section (not just the line you want to change)
+3. Pay attention to whitespace, indentation, and closing delimiters
+4. Make one focused change per operation for better reliability
+
+The tool will validate the exact match including whitespace before making any changes, making it safer than write_to_file for modifications.
 
 Parameters:
 - path: (required) The path of the file to modify (relative to the current working directory ${args.cwd})
@@ -250,6 +258,21 @@ Your search/replace content here
 		// Require similarity to meet threshold
 		if (matchIndex === -1 || bestMatchScore < this.fuzzyThreshold) {
 			const searchChunk = searchLines.join("\n")
+
+			// Notify about match failure if callback is provided
+			if (this.onMatchFail) {
+				try {
+					await this.onMatchFail({
+						originalContent,
+						similarity: bestMatchScore,
+						threshold: this.fuzzyThreshold,
+						searchContent: searchChunk,
+						bestMatch: bestMatchContent,
+					})
+				} catch (error) {
+					console.error("Failed to handle match failure:", error)
+				}
+			}
 			const originalContentSection =
 				startLine !== undefined && endLine !== undefined
 					? `\n\nOriginal Content:\n${addLineNumbers(
@@ -271,9 +294,45 @@ Your search/replace content here
 				startLine || endLine
 					? ` at ${startLine ? `start: ${startLine}` : "start"} to ${endLine ? `end: ${endLine}` : "end"}`
 					: ""
+			// Analyze potential issues
+			const issues: string[] = []
+
+			// Check for common problems
+			if (searchLines.length < 3) {
+				issues.push(
+					"Search content is too short (less than 3 lines). Include more context for reliable matching.",
+				)
+			}
+
+			if (searchContent.trim() !== searchContent) {
+				issues.push("Search content has extra whitespace at start/end. Check for exact whitespace matching.")
+			}
+
+			const indentationMismatch = searchLines.some((line, i) => {
+				const originalLine = originalLines[matchIndex + i]
+				if (!originalLine || line.length === 0 || originalLine.length === 0) return false
+
+				const searchIndent = line.match(/^\s*/)
+				const originalIndent = originalLine.match(/^\s*/)
+
+				return searchIndent && originalIndent && searchIndent[0] !== originalIndent[0]
+			})
+			if (indentationMismatch) {
+				issues.push("Indentation patterns don't match. Ensure exact indentation is preserved.")
+			}
+
+			const openBrackets = (searchContent.match(/[({[]/g) || []).length
+			const closeBrackets = (searchContent.match(/[)}\]]/g) || []).length
+			if (openBrackets !== closeBrackets) {
+				issues.push("Unbalanced brackets/braces. Ensure all delimiters are properly matched.")
+			}
+
+			const recommendations =
+				issues.length > 0 ? "\n\nRecommendations:\n" + issues.map((issue) => `- ${issue}`).join("\n") : ""
+
 			return {
 				success: false,
-				error: `No sufficiently similar match found${lineRange} (${Math.floor(bestMatchScore * 100)}% similar, needs ${Math.floor(this.fuzzyThreshold * 100)}%)\n\nDebug Info:\n- Similarity Score: ${Math.floor(bestMatchScore * 100)}%\n- Required Threshold: ${Math.floor(this.fuzzyThreshold * 100)}%\n- Search Range: ${startLine && endLine ? `lines ${startLine}-${endLine}` : "start to end"}\n\nSearch Content:\n${searchChunk}${bestMatchSection}${originalContentSection}`,
+				error: `No sufficiently similar match found${lineRange} (${Math.floor(bestMatchScore * 100)}% similar, needs ${Math.floor(this.fuzzyThreshold * 100)}%)\n\nDebug Info:\n- Similarity Score: ${Math.floor(bestMatchScore * 100)}%\n- Required Threshold: ${Math.floor(this.fuzzyThreshold * 100)}%\n- Search Range: ${startLine && endLine ? `lines ${startLine}-${endLine}` : "start to end"}\n\nSearch Content:\n${searchChunk}${bestMatchSection}${originalContentSection}${recommendations}`,
 			}
 		}
 

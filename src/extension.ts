@@ -21,54 +21,75 @@ let outputChannel: vscode.OutputChannel
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-	outputChannel = vscode.window.createOutputChannel("Cline")
+	outputChannel = vscode.window.createOutputChannel("Clinetastic")
 	context.subscriptions.push(outputChannel)
 
-	outputChannel.appendLine("Cline extension activated")
+	outputChannel.appendLine("Clinetastic extension activated")
 
 	// Get default commands from configuration
-	const defaultCommands = vscode.workspace.getConfiguration("roo-cline").get<string[]>("allowedCommands") || []
+	const defaultCommands = vscode.workspace.getConfiguration("clinetastic").get<string[]>("allowedCommands") || []
 
 	// Initialize global state if not already set
 	if (!context.globalState.get("allowedCommands")) {
 		context.globalState.update("allowedCommands", defaultCommands)
 	}
 
+	// Create the initial provider
 	const sidebarProvider = new ClineProvider(context, outputChannel)
 
+	// Register the provider with a wrapper that handles disposal
 	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(ClineProvider.sideBarId, sidebarProvider, {
-			webviewOptions: { retainContextWhenHidden: true },
-		}),
+		vscode.window.registerWebviewViewProvider(
+			ClineProvider.sideBarId,
+			{
+				resolveWebviewView: (webviewView) => {
+					// Clear any existing state before resolving the view
+					sidebarProvider.clearTask()
+					sidebarProvider.resolveWebviewView(webviewView)
+				},
+			},
+			{
+				webviewOptions: { retainContextWhenHidden: true },
+			},
+		),
 	)
 
-	context.subscriptions.push(
-		vscode.commands.registerCommand("roo-cline.plusButtonClicked", async () => {
-			outputChannel.appendLine("Plus button Clicked")
-			await sidebarProvider.clearTask()
-			await sidebarProvider.postStateToWebview()
-			await sidebarProvider.postMessageToWebview({ type: "action", action: "chatButtonClicked" })
-		}),
-	)
+	// Register core navigation commands
+	const commands = [
+		{
+			id: "clinetastic.plusButtonClicked",
+			handler: async () => {
+				outputChannel.appendLine("Plus button Clicked")
+				await sidebarProvider.clearTask()
+				await sidebarProvider.postStateToWebview()
+				await sidebarProvider.postMessageToWebview({ type: "action", action: "chatButtonClicked" })
+			},
+		},
+		{
+			id: "clinetastic.mcpButtonClicked",
+			handler: () => sidebarProvider.postMessageToWebview({ type: "action", action: "mcpButtonClicked" }),
+		},
+		{
+			id: "clinetastic.promptsButtonClicked",
+			handler: () => sidebarProvider.postMessageToWebview({ type: "action", action: "promptsButtonClicked" }),
+		},
+		{
+			id: "clinetastic.settingsButtonClicked",
+			handler: () => sidebarProvider.postMessageToWebview({ type: "action", action: "settingsButtonClicked" }),
+		},
+		{
+			id: "clinetastic.historyButtonClicked",
+			handler: () => sidebarProvider.postMessageToWebview({ type: "action", action: "historyButtonClicked" }),
+		},
+	]
 
-	context.subscriptions.push(
-		vscode.commands.registerCommand("roo-cline.mcpButtonClicked", () => {
-			sidebarProvider.postMessageToWebview({ type: "action", action: "mcpButtonClicked" })
-		}),
-	)
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand("roo-cline.promptsButtonClicked", () => {
-			sidebarProvider.postMessageToWebview({ type: "action", action: "promptsButtonClicked" })
-		}),
-	)
+	commands.forEach((cmd) => {
+		context.subscriptions.push(vscode.commands.registerCommand(cmd.id, cmd.handler))
+	})
 
 	const openClineInNewTab = async () => {
 		outputChannel.appendLine("Opening Cline in new tab")
-		// (this example uses webviewProvider activation event which is necessary to deserialize cached webview, but since we use retainContextWhenHidden, we don't need to use that event)
-		// https://github.com/microsoft/vscode-extension-samples/blob/main/webview-sample/src/extension.ts
-		const tabProvider = new ClineProvider(context, outputChannel)
-		//const column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined
+
 		const lastCol = Math.max(...vscode.window.visibleTextEditors.map((editor) => editor.viewColumn || 0))
 
 		// Check if there are any visible text editors, otherwise open a new group to the right
@@ -78,17 +99,25 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 		const targetCol = hasVisibleEditors ? Math.max(lastCol + 1, 1) : vscode.ViewColumn.Two
 
-		const panel = vscode.window.createWebviewPanel(ClineProvider.tabPanelId, "Cline", targetCol, {
+		const panel = vscode.window.createWebviewPanel(ClineProvider.tabPanelId, "Clinetastic", targetCol, {
 			enableScripts: true,
 			retainContextWhenHidden: true,
 			localResourceRoots: [context.extensionUri],
 		})
-		// TODO: use better svg icon with light and dark variants (see https://stackoverflow.com/questions/58365687/vscode-extension-iconpath)
 
 		panel.iconPath = {
 			light: vscode.Uri.joinPath(context.extensionUri, "assets", "icons", "rocket.png"),
 			dark: vscode.Uri.joinPath(context.extensionUri, "assets", "icons", "rocket.png"),
 		}
+
+		// Create a new provider instance for this tab
+		const tabProvider = new ClineProvider(context, outputChannel)
+
+		// Handle panel disposal
+		panel.onDidDispose(() => {
+			tabProvider.dispose()
+		})
+
 		tabProvider.resolveWebviewView(panel)
 
 		// Lock the editor group so clicking on files doesn't open them over the panel
@@ -96,21 +125,8 @@ export function activate(context: vscode.ExtensionContext) {
 		await vscode.commands.executeCommand("workbench.action.lockEditorGroup")
 	}
 
-	context.subscriptions.push(vscode.commands.registerCommand("roo-cline.popoutButtonClicked", openClineInNewTab))
-	context.subscriptions.push(vscode.commands.registerCommand("roo-cline.openInNewTab", openClineInNewTab))
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand("roo-cline.settingsButtonClicked", () => {
-			//vscode.window.showInformationMessage(message)
-			sidebarProvider.postMessageToWebview({ type: "action", action: "settingsButtonClicked" })
-		}),
-	)
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand("roo-cline.historyButtonClicked", () => {
-			sidebarProvider.postMessageToWebview({ type: "action", action: "historyButtonClicked" })
-		}),
-	)
+	context.subscriptions.push(vscode.commands.registerCommand("clinetastic.popoutButtonClicked", openClineInNewTab))
+	context.subscriptions.push(vscode.commands.registerCommand("clinetastic.openInNewTab", openClineInNewTab))
 
 	/*
 	We use the text document content provider API to show the left side for diff view by creating a virtual document for the original content. This makes it readonly so users know to edit the right side if they want to keep their changes.
@@ -163,5 +179,5 @@ export function activate(context: vscode.ExtensionContext) {
 
 // This method is called when your extension is deactivated
 export function deactivate() {
-	outputChannel.appendLine("Cline extension deactivated")
+	outputChannel.appendLine("Clinetastic extension deactivated")
 }

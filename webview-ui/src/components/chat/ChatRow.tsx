@@ -19,6 +19,7 @@ import Thumbnails from "../common/Thumbnails"
 import McpResourceRow from "../mcp/McpResourceRow"
 import McpToolRow from "../mcp/McpToolRow"
 import { highlightMentions } from "./TaskHeader"
+import ProcessingRow from "./ProcessingRow"
 
 interface ChatRowProps {
 	message: ClineMessage
@@ -595,6 +596,13 @@ export const ChatRowContent = ({
 							</div>
 							{message.images && message.images.length > 0 && (
 								<Thumbnails images={message.images} style={{ marginTop: "8px" }} />
+							)}
+							{message.metadata && (
+								<ProcessingRow
+									message={message}
+									isExpanded={isExpanded}
+									onToggleExpand={onToggleExpand}
+								/>
 							)}
 						</div>
 					)

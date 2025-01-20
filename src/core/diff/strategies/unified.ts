@@ -4,11 +4,32 @@ import { DiffStrategy, DiffResult } from "../types"
 export class UnifiedDiffStrategy implements DiffStrategy {
 	getToolDescription(args: { cwd: string; toolOptions?: { [key: string]: string } }): string {
 		return `## apply_diff
-Description: Apply a unified diff to a file at the specified path. This tool is useful when you need to make specific modifications to a file based on a set of changes provided in unified diff format (diff -U3).
+Description: Request to make precise, surgical changes to existing code. This is the preferred tool for modifying existing files because it:
+1. Ensures exact matching of target code to prevent accidental modifications
+2. Preserves code formatting and indentation automatically
+3. Provides detailed error messages if the target code cannot be found
+4. Maintains file integrity by only changing the specified section
+
+Best practices for using this tool:
+1. Always use read_file first to get exact content and line numbers
+2. Include sufficient context in the SEARCH section (not just the line you want to change)
+3. Pay attention to whitespace, indentation, and closing delimiters
+4. Make one focused change per operation for better reliability
+
+The tool will validate the exact match including whitespace before making any changes, making it safer than write_to_file for modifications.
 
 Parameters:
-- path: (required) The path of the file to apply the diff to (relative to the current working directory ${args.cwd})
-- diff: (required) The diff content in unified format to apply to the file.
+- path: (required) The path of the file to modify (relative to the current working directory ${args.cwd})
+- diff: (required) The search/replace block defining the changes.
+- start_line: (required) The line number where the search block starts.
+- end_line: (required) The line number where the search block ends.
+
+Diff format:
+\`\`\`
+<<<<<<< SEARCH
+[exact content to find including whitespace]
+=======
+[new content to replace with]
 
 Format Requirements:
 
