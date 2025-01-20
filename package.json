@@ -103,7 +103,40 @@
 				"category": "Clinetastic"
 			}
 		],
-		"menus": {},
+		"menus": {
+			"view/title": [
+				{
+					"command": "clinetastic.plusButtonClicked",
+					"when": "view == clinetastic.SidebarProvider",
+					"group": "navigation@1"
+				},
+				{
+					"command": "clinetastic.mcpButtonClicked",
+					"when": "view == clinetastic.SidebarProvider",
+					"group": "navigation@2"
+				},
+				{
+					"command": "clinetastic.promptsButtonClicked",
+					"when": "view == clinetastic.SidebarProvider",
+					"group": "navigation@3"
+				},
+				{
+					"command": "clinetastic.historyButtonClicked",
+					"when": "view == clinetastic.SidebarProvider",
+					"group": "navigation@4"
+				},
+				{
+					"command": "clinetastic.popoutButtonClicked",
+					"when": "view == clinetastic.SidebarProvider",
+					"group": "navigation@5"
+				},
+				{
+					"command": "clinetastic.settingsButtonClicked",
+					"when": "view == clinetastic.SidebarProvider",
+					"group": "navigation@6"
+				}
+			]
+		},
 		"configuration": {
 			"title": "Clinetastic",
 			"properties": {
