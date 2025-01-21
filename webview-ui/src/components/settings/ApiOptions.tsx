@@ -1151,7 +1151,7 @@ const ApiOptions = ({ apiErrorMessage, modelIdErrorMessage }: ApiOptionsProps) =
 								fontWeight: 500,
 							}}>
 							Note: This is a very experimental integration and may not work as expected. Please report
-							any issues to the Roo-Code GitHub repository.
+							any issues to the Clinetastic GitHub repository.
 						</p>
 					</div>
 				</div>
@@ -1279,13 +1279,13 @@ const ApiOptions = ({ apiErrorMessage, modelIdErrorMessage }: ApiOptionsProps) =
 }
 
 export function getGlamaAuthUrl(uriScheme?: string) {
-	const callbackUrl = `${uriScheme || "vscode"}://rooveterinaryinc.roo-cline/glama`
+	const callbackUrl = `${uriScheme || "vscode"}://Sellitus.clinetastic/glama`
 
 	return `https://glama.ai/oauth/authorize?callback_url=${encodeURIComponent(callbackUrl)}`
 }
 
 export function getOpenRouterAuthUrl(uriScheme?: string) {
-	return `https://openrouter.ai/auth?callback_url=${uriScheme || "vscode"}://rooveterinaryinc.roo-cline/openrouter`
+	return `https://openrouter.ai/auth?callback_url=${uriScheme || "vscode"}://Sellitus.clinetastic/openrouter`
 }
 
 export const formatPrice = (price: number) => {
