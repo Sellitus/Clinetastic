@@ -30,7 +30,7 @@ const Announcement = ({ version, hideAnnouncement }: AnnouncementProps) => {
 				<span className="codicon codicon-close"></span>
 			</VSCodeButton>
 			<h2 style={{ margin: "0 0 8px" }}>
-				🎉{"  "}Introducing Roo Cline v{minorVersion}
+				🎉{"  "}Introducing Clinetastic v{minorVersion}
 			</h2>
 
 			<h3 style={{ margin: "0 0 8px" }}>Agent Modes Customization</h3>
@@ -38,7 +38,7 @@ const Announcement = ({ version, hideAnnouncement }: AnnouncementProps) => {
 				Click the new <span className="codicon codicon-notebook" style={{ fontSize: "10px" }}></span> icon in
 				the menu bar to open the Prompts Settings and customize Agent Modes for new levels of productivity.
 				<ul style={{ margin: "4px 0 6px 20px", padding: 0 }}>
-					<li>Tailor how Roo Cline behaves in different modes: Code, Architect, and Ask.</li>
+					<li>Tailor how Clinetastic behaves in different modes: Code, Architect, and Ask.</li>
 					<li>Preview and verify your changes using the Preview System Prompt button.</li>
 				</ul>
 			</p>
@@ -61,8 +61,8 @@ const Announcement = ({ version, hideAnnouncement }: AnnouncementProps) => {
 
 			<p style={{ margin: "5px 0px" }}>
 				We're very excited to see what you build with this new feature! Join us at
-				<VSCodeLink href="https://www.reddit.com/r/roocline" style={{ display: "inline" }}>
-					reddit.com/r/roocline
+				<VSCodeLink href="https://www.reddit.com/r/clinetastic" style={{ display: "inline" }}>
+					reddit.com/r/clinetastic
 				</VSCodeLink>
 				to discuss and share feedback.
 			</p>

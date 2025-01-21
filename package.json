@@ -1,9 +1,9 @@
 {
-	"name": "roo-cline",
-	"displayName": "Roo Cline",
-	"description": "A fork of Cline, an autonomous coding agent, with some added experimental configuration and automation features.",
-	"publisher": "RooVeterinaryInc",
-	"version": "3.1.6",
+	"name": "clinetastic",
+	"displayName": "Clinetastic",
+	"description": "A fork of Clinetastic, an autonomous coding agent, with some added experimental configuration and automation features.",
+	"publisher": "Sellitus",
+	"version": "1.0.0",
 	"icon": "assets/icons/rocket.png",
 	"galleryBanner": {
 		"color": "#617A91",
@@ -13,13 +13,13 @@
 		"vscode": "^1.84.0"
 	},
 	"author": {
-		"name": "Roo Vet"
+		"name": "Sellitus"
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/RooVetGit/Roo-Cline"
+		"url": "https://github.com/Sellitus/Clinetastic"
 	},
-	"homepage": "https://github.com/RooVetGit/Roo-Cline",
+	"homepage": "https://github.com/Sellitus/Clinetastic",
 	"categories": [
 		"AI",
 		"Chat",
@@ -51,96 +51,96 @@
 		"viewsContainers": {
 			"activitybar": [
 				{
-					"id": "roo-cline-ActivityBar",
-					"title": "Roo Cline",
+					"id": "clinetastic-ActivityBar",
+					"title": "Clinetastic",
 					"icon": "$(rocket)"
 				}
 			]
 		},
 		"views": {
-			"roo-cline-ActivityBar": [
+			"clinetastic-ActivityBar": [
 				{
 					"type": "webview",
-					"id": "roo-cline.SidebarProvider",
+					"id": "clinetastic.SidebarProvider",
 					"name": ""
 				}
 			]
 		},
 		"commands": [
 			{
-				"command": "roo-cline.plusButtonClicked",
+				"command": "clinetastic.plusButtonClicked",
 				"title": "New Task",
 				"icon": "$(add)"
 			},
 			{
-				"command": "roo-cline.mcpButtonClicked",
+				"command": "clinetastic.mcpButtonClicked",
 				"title": "MCP Servers",
 				"icon": "$(server)"
 			},
 			{
-				"command": "roo-cline.promptsButtonClicked",
+				"command": "clinetastic.promptsButtonClicked",
 				"title": "Prompts",
 				"icon": "$(notebook)"
 			},
 			{
-				"command": "roo-cline.historyButtonClicked",
+				"command": "clinetastic.historyButtonClicked",
 				"title": "History",
 				"icon": "$(history)"
 			},
 			{
-				"command": "roo-cline.popoutButtonClicked",
+				"command": "clinetastic.popoutButtonClicked",
 				"title": "Open in Editor",
 				"icon": "$(link-external)"
 			},
 			{
-				"command": "roo-cline.settingsButtonClicked",
+				"command": "clinetastic.settingsButtonClicked",
 				"title": "Settings",
 				"icon": "$(settings-gear)"
 			},
 			{
-				"command": "roo-cline.openInNewTab",
+				"command": "clinetastic.openInNewTab",
 				"title": "Open In New Tab",
-				"category": "Roo Cline"
+				"category": "Clinetastic"
 			}
 		],
 		"menus": {
 			"view/title": [
 				{
-					"command": "roo-cline.plusButtonClicked",
+					"command": "clinetastic.plusButtonClicked",
 					"group": "navigation@1",
-					"when": "view == roo-cline.SidebarProvider"
+					"when": "view == clinetastic.SidebarProvider"
 				},
 				{
-					"command": "roo-cline.promptsButtonClicked",
+					"command": "clinetastic.promptsButtonClicked",
 					"group": "navigation@2",
-					"when": "view == roo-cline.SidebarProvider"
+					"when": "view == clinetastic.SidebarProvider"
 				},
 				{
-					"command": "roo-cline.mcpButtonClicked",
+					"command": "clinetastic.mcpButtonClicked",
 					"group": "navigation@3",
-					"when": "view == roo-cline.SidebarProvider"
+					"when": "view == clinetastic.SidebarProvider"
 				},
 				{
-					"command": "roo-cline.historyButtonClicked",
+					"command": "clinetastic.historyButtonClicked",
 					"group": "navigation@4",
-					"when": "view == roo-cline.SidebarProvider"
+					"when": "view == clinetastic.SidebarProvider"
 				},
 				{
-					"command": "roo-cline.popoutButtonClicked",
+					"command": "clinetastic.popoutButtonClicked",
 					"group": "navigation@5",
-					"when": "view == roo-cline.SidebarProvider"
+					"when": "view == clinetastic.SidebarProvider"
 				},
 				{
-					"command": "roo-cline.settingsButtonClicked",
+					"command": "clinetastic.settingsButtonClicked",
 					"group": "navigation@6",
-					"when": "view == roo-cline.SidebarProvider"
+					"when": "view == clinetastic.SidebarProvider"
 				}
 			]
 		},
 		"configuration": {
-			"title": "RooCline",
+			"title": "Clinetastic",
 			"properties": {
-				"roo-cline.allowedCommands": {
+				"clinetastic.allowedCommands": {
 					"type": "array",
 					"items": {
 						"type": "string"
@@ -155,7 +155,7 @@
 					],
 					"description": "Commands that can be auto-executed when 'Always approve execute operations' is enabled"
 				},
-				"roo-cline.vsCodeLmModelSelector": {
+				"clinetastic.vsCodeLmModelSelector": {
 					"type": "object",
 					"properties": {
 						"vendor": {
