@@ -101,14 +101,6 @@ export class GlamaHandler implements ApiHandler, SingleCompletionHandler {
 				{
 					headers: {
 						Authorization: `Bearer ${this.options.glamaApiKey}`,
-						"X-Glama-Metadata": JSON.stringify({
-							labels: [
-								{
-									key: "app",
-									value: "vscode.rooveterinaryinc.roo-cline",
-								},
-							],
-						}),
 					},
 				},
 			)

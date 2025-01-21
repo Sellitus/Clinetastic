@@ -65,10 +65,6 @@ export interface ExtensionStateContextType extends ExtensionState {
 	setExperimentalDiffStrategy: (value: boolean) => void
 	autoApprovalEnabled?: boolean
 	setAutoApprovalEnabled: (value: boolean) => void
-	planningModel?: string
-	setPlanningModel: (value: string) => void
-	executionModel?: string
-	setExecutionModel: (value: string) => void
 }
 
 export const ExtensionStateContext = createContext<ExtensionStateContextType | undefined>(undefined)
@@ -99,8 +95,6 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		enhancementApiConfigId: "",
 		experimentalDiffStrategy: false,
 		autoApprovalEnabled: false,
-		planningModel: "",
-		executionModel: "",
 	})
 	const [didHydrateState, setDidHydrateState] = useState(false)
 	const [showWelcome, setShowWelcome] = useState(false)
@@ -264,14 +258,6 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		setExperimentalDiffStrategy: (value) =>
 			setState((prevState) => ({ ...prevState, experimentalDiffStrategy: value })),
 		setAutoApprovalEnabled: (value) => setState((prevState) => ({ ...prevState, autoApprovalEnabled: value })),
-		setPlanningModel: (value) => {
-			setState((prevState) => ({ ...prevState, planningModel: value }))
-			vscode.postMessage({ type: "planningModel", text: value })
-		},
-		setExecutionModel: (value) => {
-			setState((prevState) => ({ ...prevState, executionModel: value }))
-			vscode.postMessage({ type: "executionModel", text: value })
-		},
 	}
 
 	return <ExtensionStateContext.Provider value={contextValue}>{children}</ExtensionStateContext.Provider>

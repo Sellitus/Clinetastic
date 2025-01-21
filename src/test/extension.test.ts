@@ -1,55 +1,23 @@
-import * as vscode from "vscode"
-import * as assert from "assert"
-import * as path from "path"
-import * as dotenv from "dotenv"
+const assert = require("assert")
+const vscode = require("vscode")
+const path = require("path")
+const fs = require("fs")
+const dotenv = require("dotenv")
 
 // Load test environment variables
 const testEnvPath = path.join(__dirname, ".test_env")
 dotenv.config({ path: testEnvPath })
 
-suite("Clinetastic Extension Test Suite", () => {
-	let activePanel: vscode.WebviewPanel | undefined
-	let providers: any[] = []
-
-	// Cleanup after each test
-	afterEach(async () => {
-		if (activePanel) {
-			activePanel.dispose()
-			activePanel = undefined
-		}
-	})
-
-	// Global cleanup
-	afterAll(async () => {
-		// Clean up any remaining panels
-		if (activePanel) {
-			activePanel.dispose()
-			activePanel = undefined
-		}
-
-		// Clean up any providers
-		for (const provider of providers) {
-			if (provider?.dispose) {
-				await provider.dispose()
-			}
-		}
-		providers = []
-
-		// Force garbage collection
-		if (global.gc) {
-			global.gc()
-		}
-	})
-
-	vscode.window.showInformationMessage("Starting Clinetastic extension tests.")
+suite("Roo Cline Extension Test Suite", () => {
+	vscode.window.showInformationMessage("Starting Roo Cline extension tests.")
 
 	test("Extension should be present", () => {
-		const extension = vscode.extensions.getExtension("RooVeterinaryInc.clinetastic")
+		const extension = vscode.extensions.getExtension("RooVeterinaryInc.roo-cline")
 		assert.notStrictEqual(extension, undefined)
 	})
 
 	test("Extension should activate", async () => {
-		const extension = vscode.extensions.getExtension("RooVeterinaryInc.clinetastic")
+		const extension = vscode.extensions.getExtension("RooVeterinaryInc.roo-cline")
 		if (!extension) {
 			assert.fail("Extension not found")
 		}
@@ -57,64 +25,91 @@ suite("Clinetastic Extension Test Suite", () => {
 		assert.strictEqual(extension.isActive, true)
 	})
 
-	test("OpenRouter API key and models should be configured correctly", async function () {
+	test("OpenRouter API key and models should be configured correctly", function (done) {
 		// @ts-ignore
 		this.timeout(60000) // Increase timeout to 60s for network requests
+		;(async () => {
+			try {
+				// Get extension instance
+				const extension = vscode.extensions.getExtension("RooVeterinaryInc.roo-cline")
+				if (!extension) {
+					done(new Error("Extension not found"))
+					return
+				}
 
-		// Get extension instance
-		const extension = vscode.extensions.getExtension("RooVeterinaryInc.clinetastic")
-		assert.notStrictEqual(extension, undefined, "Extension not found")
-		if (!extension) {
-			assert.fail("Extension not found")
-		}
+				// Verify API key is set and valid
+				const apiKey = process.env.OPEN_ROUTER_API_KEY
+				if (!apiKey) {
+					done(new Error("OPEN_ROUTER_API_KEY environment variable is not set"))
+					return
+				}
+				if (!apiKey.startsWith("sk-or-v1-")) {
+					done(new Error("OpenRouter API key should have correct format"))
+					return
+				}
 
-		// Verify API key is set and valid
-		const apiKey = process.env.OPEN_ROUTER_API_KEY
-		assert.notStrictEqual(apiKey, undefined, "OPEN_ROUTER_API_KEY environment variable is not set")
-		assert.strictEqual(apiKey?.startsWith("sk-or-v1-"), true, "OpenRouter API key should have correct format")
+				// Activate extension and get provider
+				const api = await extension.activate()
+				if (!api) {
+					done(new Error("Extension API not found"))
+					return
+				}
 
-		// Activate extension and get provider
-		const api = await extension.activate()
-		assert.notStrictEqual(api, undefined, "Extension API not found")
+				// Get the provider from the extension's exports
+				const provider = api.sidebarProvider
+				if (!provider) {
+					done(new Error("Provider not found"))
+					return
+				}
 
-		// Get the provider from the extension's exports
-		const provider = api.sidebarProvider
-		assert.notStrictEqual(provider, undefined, "Provider not found")
-		providers.push(provider)
+				// Set up the API configuration
+				await provider.updateGlobalState("apiProvider", "openrouter")
+				await provider.storeSecret("openRouterApiKey", apiKey)
 
-		// Set up the API configuration
-		await provider.updateGlobalState("apiProvider", "openrouter")
-		await provider.storeSecret("openRouterApiKey", apiKey)
+				// Set up timeout to fail test if models don't load
+				const timeout = setTimeout(() => {
+					done(new Error("Timeout waiting for models to load"))
+				}, 30000)
 
-		// Trigger model loading
-		await provider.refreshOpenRouterModels()
+				// Wait for models to be loaded
+				const checkModels = setInterval(async () => {
+					try {
+						const models = await provider.readOpenRouterModels()
+						if (!models) {
+							return
+						}
 
-		// Wait for models with timeout
-		const startTime = Date.now()
-		const timeout = 30000
-		let models = null
+						clearInterval(checkModels)
+						clearTimeout(timeout)
 
-		while (Date.now() - startTime < timeout) {
-			models = await provider.readOpenRouterModels()
-			if (models) break
-			await new Promise((resolve) => setTimeout(resolve, 1000))
-		}
+						// Verify expected Claude models are available
+						const expectedModels = [
+							"anthropic/claude-3.5-sonnet:beta",
+							"anthropic/claude-3-sonnet:beta",
+							"anthropic/claude-3.5-sonnet",
+							"anthropic/claude-3.5-sonnet-20240620",
+							"anthropic/claude-3.5-sonnet-20240620:beta",
+							"anthropic/claude-3.5-haiku:beta",
+						]
 
-		assert.notStrictEqual(models, null, "Timeout waiting for models to load")
+						for (const modelId of expectedModels) {
+							assert.strictEqual(modelId in models, true, `Model ${modelId} should be available`)
+						}
 
-		// Verify expected Claude models are available
-		const expectedModels = [
-			"anthropic/claude-3.5-sonnet:beta",
-			"anthropic/claude-3-sonnet:beta",
-			"anthropic/claude-3.5-sonnet",
-			"anthropic/claude-3.5-sonnet-20240620",
-			"anthropic/claude-3.5-sonnet-20240620:beta",
-			"anthropic/claude-3.5-haiku:beta",
-		]
+						done()
+					} catch (error) {
+						clearInterval(checkModels)
+						clearTimeout(timeout)
+						done(error)
+					}
+				}, 1000)
 
-		for (const modelId of expectedModels) {
-			assert.strictEqual(modelId in models, true, `Model ${modelId} should be available`)
-		}
+				// Trigger model loading
+				await provider.refreshOpenRouterModels()
+			} catch (error) {
+				done(error)
+			}
+		})()
 	})
 
 	test("Commands should be registered", async () => {
@@ -122,12 +117,12 @@ suite("Clinetastic Extension Test Suite", () => {
 
 		// Test core commands are registered
 		const expectedCommands = [
-			"clinetastic.plusButtonClicked",
-			"clinetastic.mcpButtonClicked",
-			"clinetastic.historyButtonClicked",
-			"clinetastic.popoutButtonClicked",
-			"clinetastic.settingsButtonClicked",
-			"clinetastic.openInNewTab",
+			"roo-cline.plusButtonClicked",
+			"roo-cline.mcpButtonClicked",
+			"roo-cline.historyButtonClicked",
+			"roo-cline.popoutButtonClicked",
+			"roo-cline.settingsButtonClicked",
+			"roo-cline.openInNewTab",
 		]
 
 		for (const cmd of expectedCommands) {
@@ -136,13 +131,14 @@ suite("Clinetastic Extension Test Suite", () => {
 	})
 
 	test("Views should be registered", () => {
-		activePanel = vscode.window.createWebviewPanel(
-			"clinetastic.SidebarProvider",
-			"Clinetastic",
+		const view = vscode.window.createWebviewPanel(
+			"roo-cline.SidebarProvider",
+			"Roo Cline",
 			vscode.ViewColumn.One,
 			{},
 		)
-		assert.notStrictEqual(activePanel, undefined)
+		assert.notStrictEqual(view, undefined)
+		view.dispose()
 	})
 
 	test("Should handle prompt and response correctly", async function () {
@@ -153,33 +149,41 @@ suite("Clinetastic Extension Test Suite", () => {
 		const interval = 1000
 
 		// Get extension instance
-		const extension = vscode.extensions.getExtension("RooVeterinaryInc.clinetastic")
-		assert.notStrictEqual(extension, undefined, "Extension not found")
+		const extension = vscode.extensions.getExtension("RooVeterinaryInc.roo-cline")
 		if (!extension) {
 			assert.fail("Extension not found")
+			return
 		}
 
 		// Activate extension and get API
 		const api = await extension.activate()
-		assert.notStrictEqual(api, undefined, "Extension API not found")
+		if (!api) {
+			assert.fail("Extension API not found")
+			return
+		}
 
 		// Get provider
 		const provider = api.sidebarProvider
-		assert.notStrictEqual(provider, undefined, "Provider not found")
-		providers.push(provider)
+		if (!provider) {
+			assert.fail("Provider not found")
+			return
+		}
 
 		// Set up API configuration
 		await provider.updateGlobalState("apiProvider", "openrouter")
 		await provider.updateGlobalState("openRouterModelId", "anthropic/claude-3.5-sonnet")
 		const apiKey = process.env.OPEN_ROUTER_API_KEY
-		assert.notStrictEqual(apiKey, undefined, "OPEN_ROUTER_API_KEY environment variable is not set")
+		if (!apiKey) {
+			assert.fail("OPEN_ROUTER_API_KEY environment variable is not set")
+			return
+		}
 		await provider.storeSecret("openRouterApiKey", apiKey)
 
 		// Create webview panel with development options
 		const extensionUri = extension.extensionUri
-		activePanel = vscode.window.createWebviewPanel(
-			"clinetastic.SidebarProvider",
-			"Clinetastic",
+		const panel = vscode.window.createWebviewPanel(
+			"roo-cline.SidebarProvider",
+			"Roo Cline",
 			vscode.ViewColumn.One,
 			{
 				enableScripts: true,
@@ -189,29 +193,29 @@ suite("Clinetastic Extension Test Suite", () => {
 			},
 		)
 
-		// Store original postMessage for cleanup
-		const originalPostMessage = provider.postMessageToWebview.bind(provider)
-
 		try {
 			// Initialize webview with development context
-			activePanel.webview.options = {
+			panel.webview.options = {
 				enableScripts: true,
 				enableCommandUris: true,
 				localResourceRoots: [extensionUri],
 			}
 
 			// Initialize provider with panel
-			provider.resolveWebviewView(activePanel)
+			provider.resolveWebviewView(panel)
 
 			// Set up message tracking
 			let webviewReady = false
 			let messagesReceived = false
+			const originalPostMessage = provider.postMessageToWebview.bind(provider)
 			// @ts-ignore
 			provider.postMessageToWebview = async (message) => {
 				if (message.type === "state") {
 					webviewReady = true
+					console.log("Webview state received:", message)
 					if (message.state?.clineMessages?.length > 0) {
 						messagesReceived = true
+						console.log("Messages in state:", message.state.clineMessages)
 					}
 				}
 				await originalPostMessage(message)
@@ -219,80 +223,111 @@ suite("Clinetastic Extension Test Suite", () => {
 
 			// Wait for webview to launch and receive initial state
 			let startTime = Date.now()
-			while (Date.now() - startTime < timeout && !webviewReady) {
+			while (Date.now() - startTime < timeout) {
+				if (webviewReady) {
+					// Wait an additional second for webview to fully initialize
+					await new Promise((resolve) => setTimeout(resolve, 1000))
+					break
+				}
 				await new Promise((resolve) => setTimeout(resolve, interval))
 			}
 
-			assert.strictEqual(webviewReady, true, "Timeout waiting for webview to be ready")
+			if (!webviewReady) {
+				throw new Error("Timeout waiting for webview to be ready")
+			}
 
 			// Send webviewDidLaunch to initialize chat
 			await provider.postMessageToWebview({ type: "webviewDidLaunch" })
+			console.log("Sent webviewDidLaunch")
+
+			// Wait for webview to fully initialize
+			await new Promise((resolve) => setTimeout(resolve, 2000))
+
+			// Restore original postMessage
+			provider.postMessageToWebview = originalPostMessage
 
 			// Wait for OpenRouter models to be fully loaded
 			startTime = Date.now()
 			while (Date.now() - startTime < timeout) {
 				const models = await provider.readOpenRouterModels()
-				if (models && Object.keys(models).length > 0) break
+				if (models && Object.keys(models).length > 0) {
+					console.log("OpenRouter models loaded")
+					break
+				}
 				await new Promise((resolve) => setTimeout(resolve, interval))
 			}
 
 			// Send prompt
 			const prompt = "Hello world, what is your name?"
-			await api.startNewTask(prompt)
+			console.log("Sending prompt:", prompt)
+
+			// Start task
+			try {
+				await api.startNewTask(prompt)
+				console.log("Task started")
+			} catch (error) {
+				console.error("Error starting task:", error)
+				throw error
+			}
 
 			// Wait for task to appear in history with tokens
 			startTime = Date.now()
 			while (Date.now() - startTime < timeout) {
 				const state = await provider.getState()
 				const task = state.taskHistory?.[0]
-				if (task && task.tokensOut > 0) break
+				if (task && task.tokensOut > 0) {
+					console.log("Task completed with tokens:", task)
+					break
+				}
 				await new Promise((resolve) => setTimeout(resolve, interval))
 			}
 
 			// Wait for messages to be processed
 			startTime = Date.now()
 			let responseReceived = false
-			while (Date.now() - startTime < timeout && !responseReceived) {
+			while (Date.now() - startTime < timeout) {
 				// Check provider.clineMessages
 				const messages = provider.clineMessages
 				if (messages && messages.length > 0) {
+					console.log("Provider messages:", JSON.stringify(messages, null, 2))
 					// @ts-ignore
-					responseReceived = messages.some(
+					const hasResponse = messages.some(
 						(m: { type: string; text: string }) =>
 							m.type === "say" && m.text && m.text.toLowerCase().includes("cline"),
 					)
+					if (hasResponse) {
+						console.log('Found response containing "Cline" in provider messages')
+						responseReceived = true
+						break
+					}
 				}
 
 				// Check provider.cline.clineMessages
 				const clineMessages = provider.cline?.clineMessages
 				if (clineMessages && clineMessages.length > 0) {
+					console.log("Cline messages:", JSON.stringify(clineMessages, null, 2))
 					// @ts-ignore
-					responseReceived = clineMessages.some(
+					const hasResponse = clineMessages.some(
 						(m: { type: string; text: string }) =>
 							m.type === "say" && m.text && m.text.toLowerCase().includes("cline"),
 					)
+					if (hasResponse) {
+						console.log('Found response containing "Cline" in cline messages')
+						responseReceived = true
+						break
+					}
 				}
 
-				if (!responseReceived) {
-					await new Promise((resolve) => setTimeout(resolve, interval))
-				}
+				await new Promise((resolve) => setTimeout(resolve, interval))
 			}
 
-			assert.strictEqual(responseReceived, true, 'Did not receive expected response containing "Cline"')
+			if (!responseReceived) {
+				console.log("Final provider state:", await provider.getState())
+				console.log("Final cline messages:", provider.cline?.clineMessages)
+				throw new Error('Did not receive expected response containing "Cline"')
+			}
 		} finally {
-			// Restore original postMessage
-			provider.postMessageToWebview = originalPostMessage
-
-			// Clean up webview panel
-			if (activePanel) {
-				activePanel.dispose()
-				activePanel = undefined
-			}
-
-			// Clean up provider
-			if (provider?.dispose) {
-				await provider.dispose()
-			}
+			panel.dispose()
 		}
 	})
 })

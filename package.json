@@ -1,25 +1,25 @@
 {
-	"name": "clinetastic",
-	"displayName": "Clinetastic",
-	"description": "An autonomous coding agent focused on token efficiency and model flexibility, enabling smarter decision-making and adaptable AI assistance.",
-	"publisher": "sellitus",
-	"version": "1.0.0",
+	"name": "roo-cline",
+	"displayName": "Roo Cline",
+	"description": "A fork of Cline, an autonomous coding agent, with some added experimental configuration and automation features.",
+	"publisher": "RooVeterinaryInc",
+	"version": "3.1.6",
 	"icon": "assets/icons/rocket.png",
 	"galleryBanner": {
-		"color": "#2C3E50",
+		"color": "#617A91",
 		"theme": "dark"
 	},
 	"engines": {
 		"vscode": "^1.84.0"
 	},
 	"author": {
-		"name": "sellitus"
+		"name": "Roo Vet"
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/sellitus/Clinetastic"
+		"url": "https://github.com/RooVetGit/Roo-Cline"
 	},
-	"homepage": "https://github.com/sellitus/Clinetastic",
+	"homepage": "https://github.com/RooVetGit/Roo-Cline",
 	"categories": [
 		"AI",
 		"Chat",
@@ -51,96 +51,96 @@
 		"viewsContainers": {
 			"activitybar": [
 				{
-					"id": "clinetastic-ActivityBar",
-					"title": "Clinetastic",
+					"id": "roo-cline-ActivityBar",
+					"title": "Roo Cline",
 					"icon": "$(rocket)"
 				}
 			]
 		},
 		"views": {
-			"clinetastic-ActivityBar": [
+			"roo-cline-ActivityBar": [
 				{
 					"type": "webview",
-					"id": "clinetastic.SidebarProvider",
+					"id": "roo-cline.SidebarProvider",
 					"name": ""
 				}
 			]
 		},
 		"commands": [
 			{
-				"command": "clinetastic.plusButtonClicked",
+				"command": "roo-cline.plusButtonClicked",
 				"title": "New Task",
 				"icon": "$(add)"
 			},
 			{
-				"command": "clinetastic.mcpButtonClicked",
+				"command": "roo-cline.mcpButtonClicked",
 				"title": "MCP Servers",
 				"icon": "$(server)"
 			},
 			{
-				"command": "clinetastic.promptsButtonClicked",
+				"command": "roo-cline.promptsButtonClicked",
 				"title": "Prompts",
 				"icon": "$(notebook)"
 			},
 			{
-				"command": "clinetastic.historyButtonClicked",
+				"command": "roo-cline.historyButtonClicked",
 				"title": "History",
 				"icon": "$(history)"
 			},
 			{
-				"command": "clinetastic.popoutButtonClicked",
+				"command": "roo-cline.popoutButtonClicked",
 				"title": "Open in Editor",
 				"icon": "$(link-external)"
 			},
 			{
-				"command": "clinetastic.settingsButtonClicked",
+				"command": "roo-cline.settingsButtonClicked",
 				"title": "Settings",
 				"icon": "$(settings-gear)"
 			},
 			{
-				"command": "clinetastic.openInNewTab",
+				"command": "roo-cline.openInNewTab",
 				"title": "Open In New Tab",
-				"category": "Clinetastic"
+				"category": "Roo Cline"
 			}
 		],
 		"menus": {
 			"view/title": [
 				{
-					"command": "clinetastic.plusButtonClicked",
-					"when": "view == clinetastic.SidebarProvider",
-					"group": "navigation@1"
+					"command": "roo-cline.plusButtonClicked",
+					"group": "navigation@1",
+					"when": "view == roo-cline.SidebarProvider"
 				},
 				{
-					"command": "clinetastic.mcpButtonClicked",
-					"when": "view == clinetastic.SidebarProvider",
-					"group": "navigation@2"
+					"command": "roo-cline.promptsButtonClicked",
+					"group": "navigation@2",
+					"when": "view == roo-cline.SidebarProvider"
 				},
 				{
-					"command": "clinetastic.promptsButtonClicked",
-					"when": "view == clinetastic.SidebarProvider",
-					"group": "navigation@3"
+					"command": "roo-cline.mcpButtonClicked",
+					"group": "navigation@3",
+					"when": "view == roo-cline.SidebarProvider"
 				},
 				{
-					"command": "clinetastic.historyButtonClicked",
-					"when": "view == clinetastic.SidebarProvider",
-					"group": "navigation@4"
+					"command": "roo-cline.historyButtonClicked",
+					"group": "navigation@4",
+					"when": "view == roo-cline.SidebarProvider"
 				},
 				{
-					"command": "clinetastic.popoutButtonClicked",
-					"when": "view == clinetastic.SidebarProvider",
-					"group": "navigation@5"
+					"command": "roo-cline.popoutButtonClicked",
+					"group": "navigation@5",
+					"when": "view == roo-cline.SidebarProvider"
 				},
 				{
-					"command": "clinetastic.settingsButtonClicked",
-					"when": "view == clinetastic.SidebarProvider",
-					"group": "navigation@6"
+					"command": "roo-cline.settingsButtonClicked",
+					"group": "navigation@6",
+					"when": "view == roo-cline.SidebarProvider"
 				}
 			]
 		},
 		"configuration": {
-			"title": "Clinetastic",
+			"title": "RooCline",
 			"properties": {
-				"clinetastic.allowedCommands": {
+				"roo-cline.allowedCommands": {
 					"type": "array",
 					"items": {
 						"type": "string"
@@ -148,22 +148,14 @@
 					"default": [
 						"npm test",
 						"npm install",
-						"npm run build",
-						"npm run lint",
-						"npm run check-types",
 						"tsc",
 						"git log",
 						"git diff",
-						"git show",
-						"git status",
-						"git branch",
-						"jest",
-						"prettier --write",
-						"eslint --fix"
+						"git show"
 					],
 					"description": "Commands that can be auto-executed when 'Always approve execute operations' is enabled"
 				},
-				"clinetastic.vsCodeLmModelSelector": {
+				"roo-cline.vsCodeLmModelSelector": {
 					"type": "object",
 					"properties": {
 						"vendor": {
@@ -192,9 +184,8 @@
 		"package": "npm run build:webview && npm run check-types && npm run lint && node esbuild.js --production",
 		"pretest": "npm run compile-tests && npm run compile && npm run lint",
 		"start:webview": "cd webview-ui && npm run start",
-		"test": "jest --forceExit --detectOpenHandles",
-		"test:all": "npm test && npm run test:webview",
-		"test:webview": "cd webview-ui && npm run test || true",
+		"test": "jest && npm run test:webview",
+		"test:webview": "cd webview-ui && npm run test",
 		"test:extension": "vscode-test",
 		"prepare": "husky",
 		"publish:marketplace": "vsce publish && ovsx publish",
@@ -257,11 +248,9 @@
 		"fast-deep-equal": "^3.1.3",
 		"fastest-levenshtein": "^1.0.16",
 		"globby": "^14.0.2",
-		"graphology": "^0.25.4",
 		"isbinaryfile": "^5.0.2",
 		"mammoth": "^1.8.0",
 		"monaco-vscode-textmate-theme-converter": "^0.1.7",
-		"ngraph.graph": "^20.0.1",
 		"openai": "^4.78.1",
 		"os-name": "^6.0.0",
 		"p-wait-for": "^5.0.2",

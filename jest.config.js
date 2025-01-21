@@ -13,13 +13,14 @@ module.exports = {
 					esModuleInterop: true,
 					allowJs: true,
 				},
+				diagnostics: false,
+				isolatedModules: true,
 			},
 		],
 	},
 	testMatch: ["**/__tests__/**/*.test.ts"],
 	moduleNameMapper: {
 		"^vscode$": "<rootDir>/src/__mocks__/vscode.js",
-		"^../webview/ClineProvider$": "<rootDir>/src/__mocks__/ClineProvider.ts",
 		"@modelcontextprotocol/sdk$": "<rootDir>/src/__mocks__/@modelcontextprotocol/sdk/index.js",
 		"@modelcontextprotocol/sdk/(.*)": "<rootDir>/src/__mocks__/@modelcontextprotocol/sdk/$1",
 		"^delay$": "<rootDir>/src/__mocks__/delay.js",
@@ -33,20 +34,7 @@ module.exports = {
 	transformIgnorePatterns: [
 		"node_modules/(?!(@modelcontextprotocol|delay|p-wait-for|globby|serialize-error|strip-ansi|default-shell|os-name)/)",
 	],
-	modulePathIgnorePatterns: [".vscode-test", "out/"],
-	reporters: ["default"],
-	setupFilesAfterEnv: ["<rootDir>/src/test/setup.ts"],
-	globalTeardown: "<rootDir>/src/test/teardown.ts",
-	testTimeout: 10000,
-	maxWorkers: 1,
-	forceExit: true,
-	// Add garbage collection between tests
-	globals: {
-		"ts-jest": {
-			isolatedModules: true,
-		},
-		gc: true,
-	},
-	// Cleanup between test files
-	globalSetup: "<rootDir>/src/test/setup-global.ts",
+	modulePathIgnorePatterns: [".vscode-test"],
+	reporters: [["jest-simple-dot-reporter", {}]],
+	setupFiles: [],
 }

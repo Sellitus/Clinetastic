@@ -45,10 +45,9 @@ export class AnthropicHandler implements ApiHandler, SingleCompletionHandler {
 						model: modelId,
 						max_tokens: this.getModel().info.maxTokens || 8192,
 						temperature: 0,
-						system: [{ text: systemPrompt, type: "text" }], // Allow system prompt to be cached since it often remains constant
+						system: [{ text: systemPrompt, type: "text", cache_control: { type: "ephemeral" } }], // setting cache breakpoint for system prompt so new tasks can reuse it
 						messages: messages.map((message, index) => {
-							// Only mark the latest user message as ephemeral to enable cache hits for previous exchanges
-							if (index === lastUserMsgIndex) {
+							if (index === lastUserMsgIndex || index === secondLastMsgUserIndex) {
 								return {
 									...message,
 									content:
@@ -61,17 +60,12 @@ export class AnthropicHandler implements ApiHandler, SingleCompletionHandler {
 													},
 												]
 											: message.content.map((content, contentIndex) =>
-													// Only apply cache_control to the first text block
-													content.type === "text" && contentIndex === 0
-														? {
-																...content,
-																cache_control: { type: "ephemeral" },
-															}
+													contentIndex === message.content.length - 1
+														? { ...content, cache_control: { type: "ephemeral" } }
 														: content,
 												),
 								}
 							}
-							// For all other messages, preserve their original state to maximize cache reuse
 							return message
 						}),
 						// tools, // cache breakpoints go from tools > system > messages, and since tools dont change, we can just set the breakpoint at the end of system (this avoids having to set a breakpoint at the end of tools which by itself does not meet min requirements for haiku caching)
@@ -120,7 +114,7 @@ export class AnthropicHandler implements ApiHandler, SingleCompletionHandler {
 					const usage = chunk.message.usage
 					yield {
 						type: "usage",
-						inputTokens: usage.input_tokens || 0, // Report raw input tokens
+						inputTokens: usage.input_tokens || 0,
 						outputTokens: usage.output_tokens || 0,
 						cacheWriteTokens: usage.cache_creation_input_tokens || undefined,
 						cacheReadTokens: usage.cache_read_input_tokens || undefined,

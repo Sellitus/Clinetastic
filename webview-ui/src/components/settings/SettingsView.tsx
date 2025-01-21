@@ -5,17 +5,6 @@ import {
 	VSCodeTextArea,
 	VSCodeTextField,
 } from "@vscode/webview-ui-toolkit/react"
-import { Dropdown } from "vscrui"
-import type { DropdownOption } from "vscrui"
-import {
-	anthropicModels,
-	bedrockModels,
-	vertexModels,
-	geminiModels,
-	openAiNativeModels,
-	deepSeekModels,
-	mistralModels,
-} from "../../../../src/shared/api"
 import { memo, useEffect, useState } from "react"
 import { useExtensionState } from "../../context/ExtensionStateContext"
 import { validateApiConfiguration, validateModelId } from "../../utils/validate"
@@ -80,10 +69,6 @@ const SettingsView = ({ onDone }: SettingsViewProps) => {
 		setMode,
 		experimentalDiffStrategy,
 		setExperimentalDiffStrategy,
-		planningModel,
-		setPlanningModel,
-		executionModel,
-		setExecutionModel,
 	} = useExtensionState()
 	const [apiErrorMessage, setApiErrorMessage] = useState<string | undefined>(undefined)
 	const [modelIdErrorMessage, setModelIdErrorMessage] = useState<string | undefined>(undefined)
@@ -127,8 +112,6 @@ const SettingsView = ({ onDone }: SettingsViewProps) => {
 			})
 			vscode.postMessage({ type: "mode", text: mode })
 			vscode.postMessage({ type: "experimentalDiffStrategy", bool: experimentalDiffStrategy })
-			vscode.postMessage({ type: "planningModel", text: planningModel })
-			vscode.postMessage({ type: "executionModel", text: executionModel })
 			onDone()
 		}
 	}
@@ -224,84 +207,6 @@ const SettingsView = ({ onDone }: SettingsViewProps) => {
 						}}
 					/>
 					<ApiOptions apiErrorMessage={apiErrorMessage} modelIdErrorMessage={modelIdErrorMessage} />
-
-					<div style={{ marginBottom: 15 }}>
-						<label style={{ fontWeight: "500", display: "block", marginBottom: 5 }}>Planning Model</label>
-						<Dropdown
-							value={planningModel}
-							onChange={(value: unknown) => setPlanningModel((value as DropdownOption).value)}
-							style={{ width: "100%" }}
-							options={[
-								...Object.keys(
-									apiConfiguration?.apiProvider === "anthropic"
-										? anthropicModels
-										: apiConfiguration?.apiProvider === "bedrock"
-											? bedrockModels
-											: apiConfiguration?.apiProvider === "vertex"
-												? vertexModels
-												: apiConfiguration?.apiProvider === "gemini"
-													? geminiModels
-													: apiConfiguration?.apiProvider === "openai-native"
-														? openAiNativeModels
-														: apiConfiguration?.apiProvider === "deepseek"
-															? deepSeekModels
-															: apiConfiguration?.apiProvider === "mistral"
-																? mistralModels
-																: anthropicModels,
-								).map((modelId) => ({
-									value: modelId,
-									label: modelId,
-								})),
-							]}
-						/>
-						<p
-							style={{
-								fontSize: "12px",
-								marginTop: "5px",
-								color: "var(--vscode-descriptionForeground)",
-							}}>
-							Select the model to use for planning and analysis tasks.
-						</p>
-					</div>
-
-					<div style={{ marginBottom: 15 }}>
-						<label style={{ fontWeight: "500", display: "block", marginBottom: 5 }}>Execution Model</label>
-						<Dropdown
-							value={executionModel}
-							onChange={(value: unknown) => setExecutionModel((value as DropdownOption).value)}
-							style={{ width: "100%" }}
-							options={[
-								...Object.keys(
-									apiConfiguration?.apiProvider === "anthropic"
-										? anthropicModels
-										: apiConfiguration?.apiProvider === "bedrock"
-											? bedrockModels
-											: apiConfiguration?.apiProvider === "vertex"
-												? vertexModels
-												: apiConfiguration?.apiProvider === "gemini"
-													? geminiModels
-													: apiConfiguration?.apiProvider === "openai-native"
-														? openAiNativeModels
-														: apiConfiguration?.apiProvider === "deepseek"
-															? deepSeekModels
-															: apiConfiguration?.apiProvider === "mistral"
-																? mistralModels
-																: anthropicModels,
-								).map((modelId) => ({
-									value: modelId,
-									label: modelId,
-								})),
-							]}
-						/>
-						<p
-							style={{
-								fontSize: "12px",
-								marginTop: "5px",
-								color: "var(--vscode-descriptionForeground)",
-							}}>
-							Select the model to use for making code changes.
-						</p>
-					</div>
 				</div>
 
 				<div style={{ marginBottom: 5 }}>
@@ -888,12 +793,12 @@ const SettingsView = ({ onDone }: SettingsViewProps) => {
 					}}>
 					<p style={{ wordWrap: "break-word", margin: 0, padding: 0 }}>
 						If you have any questions or feedback, feel free to open an issue at{" "}
-						<VSCodeLink href="https://github.com/sellitus/Clinetastic" style={{ display: "inline" }}>
-							github.com/sellitus/Clinetastic
+						<VSCodeLink href="https://github.com/RooVetGit/Roo-Cline" style={{ display: "inline" }}>
+							github.com/RooVetGit/Roo-Cline
 						</VSCodeLink>{" "}
 						or join{" "}
-						<VSCodeLink href="https://www.reddit.com/r/clinetastic/" style={{ display: "inline" }}>
-							reddit.com/r/clinetastic
+						<VSCodeLink href="https://www.reddit.com/r/roocline/" style={{ display: "inline" }}>
+							reddit.com/r/roocline
 						</VSCodeLink>
 					</p>
 					<p style={{ fontStyle: "italic", margin: "10px 0 0 0", padding: 0 }}>v{version}</p>

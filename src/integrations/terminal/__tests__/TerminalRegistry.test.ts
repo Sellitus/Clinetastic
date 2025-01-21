@@ -26,7 +26,7 @@ describe("TerminalRegistry", () => {
 
 			expect(mockCreateTerminal).toHaveBeenCalledWith({
 				cwd: "/test/path",
-				name: "Clinetastic",
+				name: "Roo Cline",
 				iconPath: expect.any(Object),
 				env: {
 					PAGER: "cat",
