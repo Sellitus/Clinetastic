@@ -22,6 +22,76 @@ export class AnthropicHandler implements ApiHandler, SingleCompletionHandler {
 		})
 	}
 
+	/**
+	 * Optimizes a message for caching by removing redundant whitespace and normalizing content
+	 */
+	private optimizeMessage(message: string): string {
+		return message
+			.trim()
+			.replace(/\s+/g, " ") // Normalize whitespace
+			.replace(/\n\s*\n/g, "\n") // Remove empty lines
+			.replace(/[\u200B-\u200D\uFEFF]/g, "") // Remove zero-width spaces
+			.replace(/\t/g, "    ") // Normalize tabs to spaces
+			.replace(/\r\n/g, "\n") // Normalize line endings
+	}
+
+	/**
+	 * Optimizes content for better cache efficiency by removing unnecessary variations
+	 */
+	private optimizeContent(
+		content:
+			| string
+			| (
+					| Anthropic.Messages.TextBlockParam
+					| Anthropic.Messages.ImageBlockParam
+					| Anthropic.Messages.ToolUseBlockParam
+					| Anthropic.Messages.ToolResultBlockParam
+			  )[],
+	):
+		| string
+		| (
+				| Anthropic.Messages.TextBlockParam
+				| Anthropic.Messages.ImageBlockParam
+				| Anthropic.Messages.ToolUseBlockParam
+				| Anthropic.Messages.ToolResultBlockParam
+		  )[] {
+		if (typeof content === "string") {
+			return this.optimizeMessage(content)
+		}
+		return content.map((block) => {
+			if ("type" in block && block.type === "text" && "text" in block) {
+				return {
+					...block,
+					text: this.optimizeMessage(block.text),
+				}
+			}
+			return block
+		})
+	}
+
+	/**
+	 * Attempts to get/set content from local cache before making API calls
+	 */
+	/**
+	 * Generates a cache key for a message
+	 */
+	private generateCacheKey(role: string, content: string): string {
+		// Create a deterministic key based on role and content
+		return `${role}-${content.slice(0, 100)}`
+	}
+
+	/**
+	 * Determines appropriate cache control type based on content
+	 */
+	private getCacheControl(content: string, role: string): { type: "ephemeral" } | undefined {
+		// Only use ephemeral caching for system prompts containing tools and user messages
+		// This allows for efficient caching while working within API constraints
+		if ((role === "system" && (content.includes("TOOL USE") || content.includes("# Tools"))) || role === "user") {
+			return { type: "ephemeral" }
+		}
+		return undefined
+	}
+
 	async *createMessage(systemPrompt: string, messages: Anthropic.Messages.MessageParam[]): ApiStream {
 		let stream: AnthropicStream<Anthropic.Beta.PromptCaching.Messages.RawPromptCachingBetaMessageStreamEvent>
 		const modelId = this.getModel().id
@@ -31,23 +101,38 @@ export class AnthropicHandler implements ApiHandler, SingleCompletionHandler {
 			case "claude-3-5-haiku-20241022":
 			case "claude-3-opus-20240229":
 			case "claude-3-haiku-20240307": {
-				/*
-				The latest message will be the new user message, one before will be the assistant message from a previous request, and the user message before that will be a previously cached user message. So we need to mark the latest user message as ephemeral to cache it for the next request, and mark the second to last user message as ephemeral to let the server know the last message to retrieve from the cache for the current request..
-				*/
-				const userMsgIndices = messages.reduce(
+				// Optimize messages for better cache efficiency
+				const optimizedSystemPrompt = this.optimizeMessage(systemPrompt)
+				const optimizedMessages = messages.map((msg) => ({
+					...msg,
+					content: this.optimizeContent(msg.content),
+				}))
+
+				// Get indices of user messages for context tracking
+				const userMsgIndices = optimizedMessages.reduce(
 					(acc, msg, index) => (msg.role === "user" ? [...acc, index] : acc),
 					[] as number[],
 				)
 				const lastUserMsgIndex = userMsgIndices[userMsgIndices.length - 1] ?? -1
 				const secondLastMsgUserIndex = userMsgIndices[userMsgIndices.length - 2] ?? -1
+				// Prepare system message with optimized caching
+				const systemMessage = {
+					text: optimizedSystemPrompt,
+					type: "text" as const,
+					cache_control: this.getCacheControl(optimizedSystemPrompt, "system"),
+				}
+
 				stream = await this.client.beta.promptCaching.messages.create(
 					{
 						model: modelId,
 						max_tokens: this.getModel().info.maxTokens || 8192,
 						temperature: 0,
-						system: [{ text: systemPrompt, type: "text", cache_control: { type: "ephemeral" } }], // setting cache breakpoint for system prompt so new tasks can reuse it
-						messages: messages.map((message, index) => {
-							if (index === lastUserMsgIndex || index === secondLastMsgUserIndex) {
+						system: [systemMessage],
+						messages: optimizedMessages.map((message, index) => {
+							// Determine if this message needs cache control based on index position
+							const needsCacheControl = index === lastUserMsgIndex || index === secondLastMsgUserIndex
+
+							if (needsCacheControl) {
 								return {
 									...message,
 									content:
