@@ -6,6 +6,8 @@ interface ApiMetrics {
 	totalCacheWrites?: number
 	totalCacheReads?: number
 	totalCost: number
+	cacheHitRatio?: number
+	cacheSavings?: number
 }
 
 /**
@@ -60,6 +62,16 @@ export function getApiMetrics(messages: ClineMessage[]): ApiMetrics {
 			}
 		}
 	})
+
+	// Calculate cache efficiency metrics if we have both reads and writes
+	if (result.totalCacheReads !== undefined && result.totalCacheWrites !== undefined) {
+		// Calculate hit ratio (successful cache reads vs total operations)
+		const totalOps = result.totalCacheReads + result.totalCacheWrites
+		result.cacheHitRatio = totalOps > 0 ? result.totalCacheReads / totalOps : 0
+
+		// Calculate token savings (tokens read from cache that didn't need to be processed)
+		result.cacheSavings = result.totalCacheReads
+	}
 
 	return result
 }

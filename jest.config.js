@@ -1,5 +1,4 @@
-/** @type {import('ts-jest').JestConfigWithTsJest} */
-module.exports = {
+/** @type {import('ts-jest').JestConfigWithTsJest} */ module.exports = {
 	preset: "ts-jest",
 	testEnvironment: "node",
 	moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
@@ -7,18 +6,13 @@ module.exports = {
 		"^.+\\.tsx?$": [
 			"ts-jest",
 			{
-				tsconfig: {
-					module: "CommonJS",
-					moduleResolution: "node",
-					esModuleInterop: true,
-					allowJs: true,
-				},
+				tsconfig: { module: "CommonJS", moduleResolution: "node", esModuleInterop: true, allowJs: true },
 				diagnostics: false,
 				isolatedModules: true,
 			},
 		],
 	},
-	testMatch: ["**/__tests__/**/*.test.ts"],
+	testMatch: ["**/__tests__/**/*.[jt]s?(x)", "**/?(*.)+(spec|test).[jt]s?(x)"],
 	moduleNameMapper: {
 		"^vscode$": "<rootDir>/src/__mocks__/vscode.js",
 		"@modelcontextprotocol/sdk$": "<rootDir>/src/__mocks__/@modelcontextprotocol/sdk/index.js",
@@ -36,5 +30,5 @@ module.exports = {
 	],
 	modulePathIgnorePatterns: [".vscode-test"],
 	reporters: [["jest-simple-dot-reporter", {}]],
-	setupFiles: [],
+	setupFiles: ["<rootDir>/src/test/setup-env.js"],
 }

@@ -14,8 +14,7 @@ import { convertTextMateToHljs } from "../utils/textMateToHljs"
 import { findLastIndex } from "../../../src/shared/array"
 import { McpServer } from "../../../src/shared/mcp"
 import { checkExistKey } from "../../../src/shared/checkExistApiConfig"
-import { Mode } from "../../../src/core/prompts/types"
-import { CustomPrompts, defaultModeSlug, defaultPrompts } from "../../../src/shared/modes"
+import { Mode, CustomPrompts, defaultModeSlug, defaultPrompts, ModeConfig } from "../../../src/shared/modes"
 
 export interface ExtensionStateContextType extends ExtensionState {
 	didHydrateState: boolean
@@ -65,6 +64,9 @@ export interface ExtensionStateContextType extends ExtensionState {
 	setExperimentalDiffStrategy: (value: boolean) => void
 	autoApprovalEnabled?: boolean
 	setAutoApprovalEnabled: (value: boolean) => void
+	handleInputChange: (field: keyof ApiConfiguration) => (event: any) => void
+	customModes: ModeConfig[]
+	setCustomModes: (value: ModeConfig[]) => void
 }
 
 export const ExtensionStateContext = createContext<ExtensionStateContextType | undefined>(undefined)
@@ -95,7 +97,9 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		enhancementApiConfigId: "",
 		experimentalDiffStrategy: false,
 		autoApprovalEnabled: false,
+		customModes: [],
 	})
+
 	const [didHydrateState, setDidHydrateState] = useState(false)
 	const [showWelcome, setShowWelcome] = useState(false)
 	const [theme, setTheme] = useState<any>(undefined)
@@ -112,18 +116,32 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 
 	const setListApiConfigMeta = useCallback(
 		(value: ApiConfigMeta[]) => setState((prevState) => ({ ...prevState, listApiConfigMeta: value })),
-		[setState],
+		[],
 	)
 
-	const onUpdateApiConfig = useCallback(
-		(apiConfig: ApiConfiguration) => {
+	const onUpdateApiConfig = useCallback((apiConfig: ApiConfiguration) => {
+		setState((currentState) => {
 			vscode.postMessage({
 				type: "upsertApiConfiguration",
-				text: state.currentApiConfigName,
+				text: currentState.currentApiConfigName,
 				apiConfiguration: apiConfig,
 			})
+			return currentState // No state update needed
+		})
+	}, [])
+
+	const handleInputChange = useCallback(
+		(field: keyof ApiConfiguration) => (event: any) => {
+			setState((currentState) => {
+				vscode.postMessage({
+					type: "upsertApiConfiguration",
+					text: currentState.currentApiConfigName,
+					apiConfiguration: { ...currentState.apiConfiguration, [field]: event.target.value },
+				})
+				return currentState // No state update needed
+			})
 		},
-		[state],
+		[],
 	)
 
 	const handleMessage = useCallback(
@@ -258,6 +276,8 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		setExperimentalDiffStrategy: (value) =>
 			setState((prevState) => ({ ...prevState, experimentalDiffStrategy: value })),
 		setAutoApprovalEnabled: (value) => setState((prevState) => ({ ...prevState, autoApprovalEnabled: value })),
+		handleInputChange,
+		setCustomModes: (value) => setState((prevState) => ({ ...prevState, customModes: value })),
 	}
 
 	return <ExtensionStateContext.Provider value={contextValue}>{children}</ExtensionStateContext.Provider>

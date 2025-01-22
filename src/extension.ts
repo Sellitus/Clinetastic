@@ -21,13 +21,13 @@ let outputChannel: vscode.OutputChannel
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-	outputChannel = vscode.window.createOutputChannel("Roo-Cline")
+	outputChannel = vscode.window.createOutputChannel("Clinetastic")
 	context.subscriptions.push(outputChannel)
 
-	outputChannel.appendLine("Roo-Cline extension activated")
+	outputChannel.appendLine("Clinetastic extension activated")
 
 	// Get default commands from configuration
-	const defaultCommands = vscode.workspace.getConfiguration("roo-cline").get<string[]>("allowedCommands") || []
+	const defaultCommands = vscode.workspace.getConfiguration("clinetastic").get<string[]>("allowedCommands") || []
 
 	// Initialize global state if not already set
 	if (!context.globalState.get("allowedCommands")) {
@@ -43,7 +43,7 @@ export function activate(context: vscode.ExtensionContext) {
 	)
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("roo-cline.plusButtonClicked", async () => {
+		vscode.commands.registerCommand("clinetastic.plusButtonClicked", async () => {
 			outputChannel.appendLine("Plus button Clicked")
 			await sidebarProvider.clearTask()
 			await sidebarProvider.postStateToWebview()
@@ -52,13 +52,13 @@ export function activate(context: vscode.ExtensionContext) {
 	)
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("roo-cline.mcpButtonClicked", () => {
+		vscode.commands.registerCommand("clinetastic.mcpButtonClicked", () => {
 			sidebarProvider.postMessageToWebview({ type: "action", action: "mcpButtonClicked" })
 		}),
 	)
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("roo-cline.promptsButtonClicked", () => {
+		vscode.commands.registerCommand("clinetastic.promptsButtonClicked", () => {
 			sidebarProvider.postMessageToWebview({ type: "action", action: "promptsButtonClicked" })
 		}),
 	)
@@ -96,18 +96,18 @@ export function activate(context: vscode.ExtensionContext) {
 		await vscode.commands.executeCommand("workbench.action.lockEditorGroup")
 	}
 
-	context.subscriptions.push(vscode.commands.registerCommand("roo-cline.popoutButtonClicked", openClineInNewTab))
-	context.subscriptions.push(vscode.commands.registerCommand("roo-cline.openInNewTab", openClineInNewTab))
+	context.subscriptions.push(vscode.commands.registerCommand("clinetastic.popoutButtonClicked", openClineInNewTab))
+	context.subscriptions.push(vscode.commands.registerCommand("clinetastic.openInNewTab", openClineInNewTab))
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("roo-cline.settingsButtonClicked", () => {
+		vscode.commands.registerCommand("clinetastic.settingsButtonClicked", () => {
 			//vscode.window.showInformationMessage(message)
 			sidebarProvider.postMessageToWebview({ type: "action", action: "settingsButtonClicked" })
 		}),
 	)
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("roo-cline.historyButtonClicked", () => {
+		vscode.commands.registerCommand("clinetastic.historyButtonClicked", () => {
 			sidebarProvider.postMessageToWebview({ type: "action", action: "historyButtonClicked" })
 		}),
 	)
@@ -163,5 +163,5 @@ export function activate(context: vscode.ExtensionContext) {
 
 // This method is called when your extension is deactivated
 export function deactivate() {
-	outputChannel.appendLine("Roo-Cline extension deactivated")
+	outputChannel.appendLine("Clinetastic extension deactivated")
 }

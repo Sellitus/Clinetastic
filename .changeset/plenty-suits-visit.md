@@ -1,5 +1,5 @@
 ---
-"roo-cline": patch
+"clinetastic": patch
 ---
 
-debug from vscode and changed output channel to Roo-Cline
+debug from vscode and changed output channel to Clinetastic

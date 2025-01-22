@@ -7,7 +7,7 @@ coverage/
 
 # Builds
 bin/
-roo-cline-*.vsix
+clinetastic-*.vsix
 
 # Local prompts and rules
 /local-prompts
