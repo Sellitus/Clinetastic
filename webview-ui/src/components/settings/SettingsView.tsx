@@ -193,9 +193,9 @@ const SettingsView = ({ onDone }: SettingsViewProps) => {
 				<div style={{ marginBottom: 40 }}>
 					<h3 style={{ color: "var(--vscode-foreground)", margin: "0 0 15px 0" }}>Auto-Approve Settings</h3>
 					<p style={{ fontSize: "12px", marginBottom: 15, color: "var(--vscode-descriptionForeground)" }}>
-						The following settings allow Roo to automatically perform operations without requiring approval.
-						Enable these settings only if you fully trust the AI and understand the associated security
-						risks.
+						The following settings allow Clinetastic to automatically perform operations without requiring
+						approval. Enable these settings only if you fully trust the AI and understand the associated
+						security risks.
 					</p>
 
 					<div style={{ marginBottom: 15 }}>
@@ -210,7 +210,7 @@ const SettingsView = ({ onDone }: SettingsViewProps) => {
 								marginTop: "5px",
 								color: "var(--vscode-descriptionForeground)",
 							}}>
-							When enabled, Roo will automatically view directory contents and read files without
+							When enabled, Clinetastic will automatically view directory contents and read files without
 							requiring you to click the Approve button.
 						</p>
 					</div>
@@ -485,7 +485,7 @@ const SettingsView = ({ onDone }: SettingsViewProps) => {
 								marginTop: "5px",
 								color: "var(--vscode-descriptionForeground)",
 							}}>
-							When enabled, Roo will play sound effects for notifications and events.
+							When enabled, Clinetastic will play sound effects for notifications and events.
 						</p>
 					</div>
 					{soundEnabled && (
@@ -560,8 +560,8 @@ const SettingsView = ({ onDone }: SettingsViewProps) => {
 								marginTop: "5px",
 								color: "var(--vscode-descriptionForeground)",
 							}}>
-							When enabled, Roo will be able to edit files more quickly and will automatically reject
-							truncated full-file writes. Works best with the latest Claude 3.5 Sonnet model.
+							When enabled, Clinetastic will be able to edit files more quickly and will automatically
+							reject truncated full-file writes. Works best with the latest Claude 3.5 Sonnet model.
 						</p>
 
 						{diffEnabled && (

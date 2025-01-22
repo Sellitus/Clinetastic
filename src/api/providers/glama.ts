@@ -87,7 +87,7 @@ export class GlamaHandler implements ApiHandler, SingleCompletionHandler {
 							labels: [
 								{
 									key: "app",
-									value: "vscode.rooveterinaryinc.roo-cline",
+									value: "vscode.sellitus.clinetastic",
 								},
 							],
 						}),

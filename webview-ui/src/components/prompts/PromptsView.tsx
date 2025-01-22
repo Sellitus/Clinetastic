@@ -449,7 +449,7 @@ const PromptsView = ({ onDone }: PromptsViewProps) => {
 							color: "var(--vscode-descriptionForeground)",
 							marginBottom: "12px",
 						}}>
-						Hit the + to create a new custom mode, or just ask Roo in chat to create one for you!
+						Hit the + to create a new custom mode, or just ask Clinetastic in chat to create one for you!
 					</div>
 
 					<div
@@ -558,8 +558,8 @@ const PromptsView = ({ onDone }: PromptsViewProps) => {
 								color: "var(--vscode-descriptionForeground)",
 								marginBottom: "8px",
 							}}>
-							Define Roo's expertise and personality for this mode. This description shapes how Roo
-							presents itself and approaches tasks.
+							Define Clinetastic's expertise and personality for this mode. This description shapes how
+							Clinetastic presents itself and approaches tasks.
 						</div>
 						<VSCodeTextArea
 							value={(() => {
@@ -769,8 +769,8 @@ const PromptsView = ({ onDone }: PromptsViewProps) => {
 						marginBottom: "20px",
 						marginTop: "5px",
 					}}>
-					Use prompt enhancement to get tailored suggestions or improvements for your inputs. This ensures Roo
-					understands your intent and provides the best possible responses.
+					Use prompt enhancement to get tailored suggestions or improvements for your inputs. This ensures
+					Clinetastic understands your intent and provides the best possible responses.
 				</div>
 
 				<div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
@@ -953,7 +953,7 @@ const PromptsView = ({ onDone }: PromptsViewProps) => {
 										color: "var(--vscode-descriptionForeground)",
 										marginBottom: "8px",
 									}}>
-									Define Roo's expertise and personality for this mode.
+									Define Clinetastic's expertise and personality for this mode.
 								</div>
 								<VSCodeTextArea
 									value={newModeRoleDefinition}
