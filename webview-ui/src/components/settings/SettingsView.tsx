@@ -282,7 +282,7 @@ const SettingsView = ({ onDone }: SettingsViewProps) => {
 									<input
 										type="range"
 										min="0"
-										max="100"
+										max="601"
 										step="1"
 										value={requestDelaySeconds}
 										onChange={(e) => setRequestDelaySeconds(parseInt(e.target.value))}
