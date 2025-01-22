@@ -8,6 +8,55 @@ import {
 	ToolUseName,
 } from "."
 
+interface ValidationResult {
+	valid: boolean
+	error?: string
+	correction?: string
+}
+
+function validateToolUseStructure(content: string, name: ToolUseName): ValidationResult {
+	// Check for properly nested XML tags
+	const openTag = `<${name}>`
+	const closeTag = `</${name}>`
+	const openCount = (content.match(new RegExp(openTag, "g")) || []).length
+	const closeCount = (content.match(new RegExp(closeTag, "g")) || []).length
+
+	if (openCount !== closeCount) {
+		const correction = closeCount < openCount ? content + closeTag : content
+		return {
+			valid: false,
+			error: `Mismatched tags for tool ${name}`,
+			correction,
+		}
+	}
+
+	return { valid: true }
+}
+
+function validateParamStructure(content: string, name: ToolParamName): ValidationResult {
+	// Validate parameter value structure
+	const openTag = `<${name}>`
+	const closeTag = `</${name}>`
+
+	if (!content.includes(openTag) && content.includes(closeTag)) {
+		return {
+			valid: false,
+			error: `Missing opening tag for parameter ${name}`,
+			correction: openTag + content,
+		}
+	}
+
+	if (content.includes(openTag) && !content.includes(closeTag)) {
+		return {
+			valid: false,
+			error: `Missing closing tag for parameter ${name}`,
+			correction: content + closeTag,
+		}
+	}
+
+	return { valid: true }
+}
+
 export function parseAssistantMessage(assistantMessage: string) {
 	let contentBlocks: AssistantMessageContent[] = []
 	let currentTextContent: TextContent | undefined = undefined
@@ -17,6 +66,7 @@ export function parseAssistantMessage(assistantMessage: string) {
 	let currentParamName: ToolParamName | undefined = undefined
 	let currentParamValueStartIndex = 0
 	let accumulator = ""
+	let errorCount = 0
 
 	for (let i = 0; i < assistantMessage.length; i++) {
 		const char = assistantMessage[i]

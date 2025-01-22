@@ -2,13 +2,73 @@ import { Anthropic } from "@anthropic-ai/sdk"
 import * as path from "path"
 import * as diff from "diff"
 
+interface ErrorCategory {
+	type: "validation" | "execution" | "system" | "user"
+	severity: "low" | "medium" | "high"
+	recoverable: boolean
+}
+
+function categorizeError(error: string): ErrorCategory {
+	// Categorize common error patterns
+	if (error.includes("Permission denied") || error.includes("Access denied")) {
+		return { type: "system", severity: "high", recoverable: false }
+	}
+	if (error.includes("not found") || error.includes("no such file")) {
+		return { type: "validation", severity: "medium", recoverable: true }
+	}
+	if (error.includes("invalid") || error.includes("malformed")) {
+		return { type: "validation", severity: "low", recoverable: true }
+	}
+	if (error.includes("timeout") || error.includes("failed to respond")) {
+		return { type: "execution", severity: "medium", recoverable: true }
+	}
+	return { type: "execution", severity: "medium", recoverable: true }
+}
+
+function suggestRecoveryAction(category: ErrorCategory, error: string): string {
+	if (!category.recoverable) {
+		return "This error cannot be automatically recovered. Please review the error details and consider an alternative approach."
+	}
+
+	switch (category.type) {
+		case "validation":
+			return "Validate the input parameters and try again with correct values."
+		case "execution":
+			return "The operation can be retried after addressing any system or network issues."
+		case "system":
+			return "Check system permissions and requirements before retrying."
+		case "user":
+			return "Review user input requirements and try again with valid input."
+		default:
+			return "Consider retrying the operation with modified parameters."
+	}
+}
+
 export const formatResponse = {
 	toolDenied: () => `The user denied this operation.`,
 
 	toolDeniedWithFeedback: (feedback?: string) =>
 		`The user denied this operation and provided the following feedback:\n<feedback>\n${feedback}\n</feedback>`,
 
-	toolError: (error?: string) => `The tool execution failed with the following error:\n<error>\n${error}\n</error>`,
+	toolError: (error?: string) => {
+		if (!error) return "The tool execution failed with an unknown error."
+
+		const category = categorizeError(error)
+		const recovery = suggestRecoveryAction(category, error)
+
+		return `The tool execution failed with the following error:
+<error>
+${error}
+</error>
+
+Error Analysis:
+- Type: ${category.type}
+- Severity: ${category.severity}
+- Recoverable: ${category.recoverable}
+
+Recovery Action:
+${recovery}`
+	},
 
 	noToolsUsed: () =>
 		`[ERROR] You did not use a tool in your previous response! Please retry with a tool use.
