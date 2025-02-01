@@ -2,11 +2,11 @@ title: Roo Code Documentation
 description: Documentation for the Roo Code project
 remote_theme: just-the-docs/just-the-docs
 
-url: https://docs.roocode.com
+url: https://docs.rootastic.com
 
 aux_links:
   "Roo Code on GitHub":
-    - "//github.com/RooVetGit/Roo-Code"
+    - "//github.com/RooVetGit/Rootastic"
 
 # Enable search
 search_enabled: true

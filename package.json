@@ -17,9 +17,9 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/RooVetGit/Roo-Code"
+		"url": "https://github.com/RooVetGit/Rootastic"
 	},
-	"homepage": "https://github.com/RooVetGit/Roo-Code",
+	"homepage": "https://github.com/RooVetGit/Rootastic",
 	"categories": [
 		"AI",
 		"Chat",
@@ -42,7 +42,7 @@
 		"ai",
 		"llama",
 		"roo code",
-		"roocode"
+		"rootastic"
 	],
 	"activationEvents": [
 		"onLanguage",

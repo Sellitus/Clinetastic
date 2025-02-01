@@ -90,7 +90,7 @@ export class UnboundHandler implements ApiHandler, SingleCompletionHandler {
 							labels: [
 								{
 									key: "app",
-									value: "roo-code",
+									value: "rootastic",
 								},
 							],
 						}),

@@ -1216,7 +1216,7 @@ const ApiOptions = ({ apiErrorMessage, modelIdErrorMessage }: ApiOptionsProps) =
 								fontWeight: 500,
 							}}>
 							Note: This is a very experimental integration and may not work as expected. Please report
-							any issues to the Roo-Code GitHub repository.
+							any issues to the Rootastic GitHub repository.
 						</p>
 					</div>
 				</div>
