@@ -4,19 +4,19 @@ import re
 
 
 replacements = [
-    {
-        "start_marker": "CAPABILITIES\n\n",
-        "new_content": """
-        Test 1
-        """
-    },
-    {
-        "start_marker": "USER'S CUSTOM INSTRUCTIONS\n\n",
-        "new_content": """
-        Test 2
-        """
-    },
-    # Add more sections here if desired
+    # {
+    #     "start_marker": "CAPABILITIES\n\n",
+    #     "new_content": """
+    #     Test 1
+    #     """
+    # },
+    # {
+    #     "start_marker": "USER'S CUSTOM INSTRUCTIONS\n\n",
+    #     "new_content": """
+    #     Test 2
+    #     """
+    # },
+    # # Add more sections here if desired
 ]
 
 def replace_section(text, start_marker, new_content):

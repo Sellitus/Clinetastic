@@ -6,13 +6,13 @@
 <a href="https://marketplace.visualstudio.com/items?itemName=RooVeterinaryInc.roo-cline" target="_blank"><strong>Download on VS Marketplace</strong></a>
 </td>
 <td align="center">
-<a href="https://discord.gg/roocode" target="_blank"><strong>Discord</strong></a>
+<a href="https://discord.gg/rootastic" target="_blank"><strong>Discord</strong></a>
 </td>
 <td align="center">
-<a href="https://www.reddit.com/r/RooCode/" target="_blank"><strong>r/RooCode</strong></a>
+<a href="https://www.reddit.com/r/Rootastic/" target="_blank"><strong>r/Rootastic</strong></a>
 </td>
 <td align="center">
-<a href="https://github.com/RooVetGit/Roo-Code/discussions/categories/feature-requests?discussions_q=is%3Aopen+category%3A%22Feature+Requests%22+sort%3Atop" target="_blank"><strong>Feature Requests</strong></a>
+<a href="https://github.com/RooVetGit/Rootastic/discussions/categories/feature-requests?discussions_q=is%3Aopen+category%3A%22Feature+Requests%22+sort%3Atop" target="_blank"><strong>Feature Requests</strong></a>
 </td>
 <td align="center">
 <a href="https://marketplace.visualstudio.com/items?itemName=RooVeterinaryInc.roo-cline&ssr=false#review-details" target="_blank"><strong>Rate & Review</strong></a>
@@ -51,7 +51,7 @@ Roo Code now integrates directly with VS Code's native code actions system, prov
 
 ### Join Our Discord!
 
-We've launched a new Discord community! Join us at [https://roocode.com/discord](https://roocode.com/discord) to:
+We've launched a new Discord community! Join us at [https://rootastic.com/discord](https://rootastic.com/discord) to:
 
 - Share your custom modes
 - Get help and support
@@ -75,7 +75,7 @@ To mark this new chapter, we're introducing the power to shape Roo Code into any
 
 The best part is that Roo can help you create these new modes! Just type "Create a new mode for <X>" in the chat to get started, and go into the Prompts tab or (carefully) edit the JSON representation to customize the prompt and allowed tools to your liking.
 
-We can't wait to hear more about what you build and how we can continue to evolve the Roo Code platform to support you. Please join us in our new https://www.reddit.com/r/RooCode subreddit to share your custom modes and be part of our next chapter. 🚀
+We can't wait to hear more about what you build and how we can continue to evolve the Roo Code platform to support you. Please join us in our new https://www.reddit.com/r/Rootastic subreddit to share your custom modes and be part of our next chapter. 🚀
 
 ## New in 3.1: Chat Mode Prompt Customization & Prompt Enhancements
 
@@ -240,7 +240,7 @@ Roo Code is available on:
 
 1. **Clone** the repo:
     ```bash
-    git clone https://github.com/RooVetGit/Roo-Code.git
+    git clone https://github.com/RooVetGit/Rootastic.git
     ```
 2. **Install dependencies**:
     ```bash
@@ -253,7 +253,7 @@ Roo Code is available on:
     - A `.vsix` file will appear in the `bin/` directory.
 4. **Install** the `.vsix` manually if desired:
     ```bash
-    code --install-extension bin/roo-code-4.0.0.vsix
+    code --install-extension bin/rootastic-4.0.0.vsix
     ```
 5. **Start the webview (Vite/React app with HMR)**:
     ```bash
@@ -278,10 +278,10 @@ We use [changesets](https://github.com/changesets/changesets) for versioning and
 
 We love community contributions! Here’s how to get involved:
 
-1. **Check Issues & Requests**: See [open issues](https://github.com/RooVetGit/Roo-Code/issues) or [feature requests](https://github.com/RooVetGit/Roo-Code/discussions/categories/feature-requests).
+1. **Check Issues & Requests**: See [open issues](https://github.com/RooVetGit/Rootastic/issues) or [feature requests](https://github.com/RooVetGit/Rootastic/discussions/categories/feature-requests).
 2. **Fork & branch** off `main`.
 3. **Submit a Pull Request** once your feature or fix is ready.
-4. **Join** our [Reddit community](https://www.reddit.com/r/RooCode/) and [Discord](https://roocode.com/discord) for feedback, tips, and announcements.
+4. **Join** our [Reddit community](https://www.reddit.com/r/Rootastic/) and [Discord](https://rootastic.com/discord) for feedback, tips, and announcements.
 
 ---
 
@@ -291,4 +291,4 @@ We love community contributions! Here’s how to get involved:
 
 ---
 
-**Enjoy Roo Code!** Whether you keep it on a short leash or let it roam autonomously, we can’t wait to see what you build. If you have questions or feature ideas, drop by our [Reddit community](https://www.reddit.com/r/RooCode/) or [Discord](https://roocode.com/discord). Happy coding!
+**Enjoy Roo Code!** Whether you keep it on a short leash or let it roam autonomously, we can’t wait to see what you build. If you have questions or feature ideas, drop by our [Reddit community](https://www.reddit.com/r/Rootastic/) or [Discord](https://rootastic.com/discord). Happy coding!

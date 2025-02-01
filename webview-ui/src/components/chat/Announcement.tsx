@@ -54,8 +54,8 @@ const Announcement = ({ version, hideAnnouncement }: AnnouncementProps) => {
 			<p style={{ margin: "5px 0px" }}>
 				We can't wait to see how you'll push Roo Code's potential even further! Share your custom modes and join
 				the discussion at{" "}
-				<VSCodeLink href="https://www.reddit.com/r/RooCode" style={{ display: "inline" }}>
-					reddit.com/r/RooCode
+				<VSCodeLink href="https://www.reddit.com/r/Rootastic" style={{ display: "inline" }}>
+					reddit.com/r/Rootastic
 				</VSCodeLink>
 				.
 			</p>

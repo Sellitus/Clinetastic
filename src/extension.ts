@@ -23,10 +23,10 @@ let outputChannel: vscode.OutputChannel
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-	outputChannel = vscode.window.createOutputChannel("Roo-Code")
+	outputChannel = vscode.window.createOutputChannel("Rootastic")
 	context.subscriptions.push(outputChannel)
 
-	outputChannel.appendLine("Roo-Code extension activated")
+	outputChannel.appendLine("Rootastic extension activated")
 
 	// Get default commands from configuration
 	const defaultCommands = vscode.workspace.getConfiguration("roo-cline").get<string[]>("allowedCommands") || []
@@ -259,5 +259,5 @@ export function activate(context: vscode.ExtensionContext) {
 
 // This method is called when your extension is deactivated
 export function deactivate() {
-	outputChannel.appendLine("Roo-Code extension deactivated")
+	outputChannel.appendLine("Rootastic extension deactivated")
 }
