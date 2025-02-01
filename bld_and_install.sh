@@ -1,0 +1,1 @@
+npm run build && code --install-extension bin/rootastic-*.vsix
